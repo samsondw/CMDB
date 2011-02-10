@@ -62,24 +62,6 @@ struct cmdb_cmd {
     char *parmdescr;
 };
 
-//----Escape Codes and Strings
-
-const char cr           = '\r';
-const char lf           = '\n';
-const char bell         = '\7';
-const char esc          = '\033';
-const char sp           = ' ';
-const char crlf[]       = "\r\n\0";
-
-const char bs[]         = "\b \b\0";
-
-const char boldon[]     = "\033[1m\0";
-const char boldoff[]    = "\033[0m\0";
-const char cls[]        = "\033[2J\0";
-const char home[]       = "\033[H\0";
-
-const char prompt[]     = "CMD>";
-
 //Before including this file, define CID_LAST as the last value from the enum with commands.
 
 //#define CMD_TBL_LEN  CID_LAST
@@ -102,23 +84,23 @@ const char prompt[]     = "CMD>";
 //You need to add the following commands to your command table.
 
 //Optional
-cmdb_cmd BOOT =     { "Boot",           GLOBALCMD    ,CID_BOOT      ,""                 ,"Boot"                         ,""};
+const cmdb_cmd BOOT =     { "Boot",           GLOBALCMD    ,CID_BOOT      ,""                 ,"Boot"                         ,""};
 
 //Optional
-cmdb_cmd MACRO =    { "Macro",          GLOBALCMD    ,CID_MACRO     ,"%s"               ,"Define macro (sp->_, cr->|)"  ,"command(s)"};
-cmdb_cmd RUN =      { "Run",            GLOBALCMD    ,CID_RUN       ,""                 ,"Run a macro"                  ,""};
-cmdb_cmd MACROS =   { "Macros",         GLOBALCMD    ,CID_MACROS    ,""                 ,"List macro(s)"                ,""};
+const cmdb_cmd MACRO =    { "Macro",          GLOBALCMD    ,CID_MACRO     ,"%s"               ,"Define macro (sp->_, cr->|)"  ,"command(s)"};
+const cmdb_cmd RUN =      { "Run",            GLOBALCMD    ,CID_RUN       ,""                 ,"Run a macro"                  ,""};
+const cmdb_cmd MACROS =   { "Macros",         GLOBALCMD    ,CID_MACROS    ,""                 ,"List macro(s)"                ,""};
 
 //Optional
-cmdb_cmd ECHO =     { "Echo",           GLOBALCMD    ,CID_ECHO      ,"%bu"              ,"Echo On|Off (1|0)"            ,"state"};
-cmdb_cmd BOLD =     { "Bold",           GLOBALCMD    ,CID_BOLD      ,"%bu"              ,"Bold On|Off (1|0)"            ,"state"};
-cmdb_cmd CLS  =     { "Cls",            GLOBALCMD    ,CID_CLS       ,""                 ,"Clears the terminal screen"   ,""};
+const cmdb_cmd ECHO =     { "Echo",           GLOBALCMD    ,CID_ECHO      ,"%bu"              ,"Echo On|Off (1|0)"            ,"state"};
+const cmdb_cmd BOLD =     { "Bold",           GLOBALCMD    ,CID_BOLD      ,"%bu"              ,"Bold On|Off (1|0)"            ,"state"};
+const cmdb_cmd CLS  =     { "Cls",            GLOBALCMD    ,CID_CLS       ,""                 ,"Clears the terminal screen"   ,""};
 
 //Mandatory!
-cmdb_cmd IDLE =     { "Idle",           GLOBALCMD    ,CID_IDLE      ,""                 ,"Deselect Subsystems"          ,""};
+const cmdb_cmd IDLE =     { "Idle",           GLOBALCMD    ,CID_IDLE      ,""                 ,"Deselect Subsystems"          ,""};
 
 //Mandatory!
-cmdb_cmd HELP =     { "Help",           GLOBALCMD    ,CID_HELP      ,"%s"               ,"Help"                         ,""};
+const cmdb_cmd HELP =     { "Help",           GLOBALCMD    ,CID_HELP      ,"%s"               ,"Help"                         ,""};
 
 #define ESC_TBL_LEN  4
 
@@ -127,7 +109,7 @@ struct esc_st {
     int     id;
 };
 
-enum {
+const enum {
     EID_CURSOR_UP,
     EID_CURSOR_DOWN,
     EID_CURSOR_RIGHT,
@@ -172,7 +154,7 @@ public:
      */
     bool cmdb_macro_hasnext();
 
-    /** Gets the next character from the macro buffer and 
+    /** Gets the next character from the macro buffer and
      *  advances the macro buffer pointer.
      *
      *  Do not call if no more characters are left!
@@ -189,20 +171,20 @@ public:
      * @returns the next character.
      */
     char cmdb_macro_peek();
-    
+
     /** Resets the macro buffer and macro buffer pointer.
-     * 
+     *
      */
     void cmdb_macro_reset();
 
-    /** Checks if the serial port has any characters 
+    /** Checks if the serial port has any characters
      * left to read by calling serial.readable().
      *
      * @returns true if any characters available.
      */
     bool cmdb_hasnext();
 
-    /** Gets the next character from the serial port by 
+    /** Gets the next character from the serial port by
      *  calling serial.getc().
      *
      *  Do not call if no characters are left!
@@ -211,7 +193,7 @@ public:
      */
     char cmdb_next();
 
-    /** Add a character to the command being processed. 
+    /** Add a character to the command being processed.
      * If a cr is added, the command is parsed and executed if possible
      * If supported special keys are encountered (like backspace, delete and cursor up) they are processed.
      *
@@ -247,20 +229,20 @@ private:
     int  cmdb_cmdid_index(int cmdid);
 
     /** Initializes the parser.
-     * 
+     *
      * @parm full if true the macro buffer is also cleared else only the command interpreter is reset.
      */
     void cmdb_init(const char full);
-    
+
     /** Writes a prompt to the serial port.
      *
      */
     void cmdb_prompt(void);
-        
+
     /** Called by cmdb_cmd_proc it parses the command against the command table.
-     * 
+     *
      * @param cmd the command and paramaters to parse.
-     * 
+     *
      * @returns the id of the parsed command.
      */
     int cmdb_parse(char *cmd);
@@ -274,7 +256,7 @@ private:
     void cmdb_cmd_proc(char *cmd);
 
     /** Generates Help from the command table and prints it.
-     * 
+     *
      * @param pre leading text
      * @param ndx the index of the command in the command table.
      * @param post trailing text.
@@ -407,6 +389,23 @@ private:
     int     argfnd;                                     //No of arguments to find in parameter definition.
     int     error;                                      //strtoXX() Error detection
 
+//----Escape Codes and Strings
+
+    const char cr           = '\r';
+    const char lf           = '\n';
+    const char bell         = '\7';
+    const char esc          = '\033';
+    const char sp           = ' ';
+    const char crlf[]       = "\r\n\0";
+
+    const char bs[]         = "\b \b\0";
+
+    const char boldon[]     = "\033[1m\0";
+    const char boldoff[]    = "\033[0m\0";
+    const char cls[]        = "\033[2J\0";
+    const char home[]       = "\033[H\0";
+
+    const char prompt[]     = "CMD>";
 };
 
 #endif
