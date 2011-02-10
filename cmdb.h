@@ -1,24 +1,24 @@
 /* mbed Command Interpreter Library
-00002  * Copyright (c) 2007-2010 sford, cstyles
-00003  *
-00004  * Permission is hereby granted, free of charge, to any person obtaining a copy
-00005  * of this software and associated documentation files (the "Software"), to deal
-00006  * in the Software without restriction, including without limitation the rights
-00007  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-00008  * copies of the Software, and to permit persons to whom the Software is
-00009  * furnished to do so, subject to the following conditions:
-00010  *
-00011  * The above copyright notice and this permission notice shall be included in
-00012  * all copies or substantial portions of the Software.
-00013  *
-00014  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-00015  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-00016  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-00017  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-00018  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-00019  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-00020  * THE SOFTWARE.
-00021  */
+ * Copyright (c) 2011 wvd_vegt
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
 
 #ifndef MBED_CMDB_H
 #define MBED_CMDB_H
@@ -171,12 +171,50 @@ public:
      * @returns true if any characters left.
      */
     bool cmdb_macro_hasnext();
+
+    /** Gets the next character from the macro buffer and 
+     *  advances the macro buffer pointer.
+     *
+     *  Do not call if no more characters are left!
+     *
+     * @returns the next character.
+     */
     char cmdb_macro_next();
+
+    /** Gets the next character from the macro buffer
+     *  but does not advance the macro buffer pointer.
+     *
+     *  Do not call if no more characters are left!
+     *
+     * @returns the next character.
+     */
     char cmdb_macro_peek();
+    
+    /** Resets the macro buffer and macro buffer pointer.
+     * 
+     */
     void cmdb_macro_reset();
 
-    //Char Input.
+    /** Checks if the macro buffer has any characters.
+     *
+     * @returns true if any characters available.
+     */
+    bool cmdb_macro_hasnext();
+
+    /** Checks if the serial port has any characters 
+     * left to read by calling serial.readable().
+     *
+     * @returns true if any characters available.
+     */
     bool cmdb_hasnext();
+
+    /** Gets the next character from the serial port by 
+     *  calling serial.getc().
+     *
+     *  Do not call if no characters are left!
+     *
+     * @returns the next character.
+     */
     char cmdb_next();
 
 private:
