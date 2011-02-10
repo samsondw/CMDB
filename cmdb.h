@@ -60,7 +60,38 @@ struct cmdb_cmd {
     char *parms;
     char *cmddescr;
     char *parmdescr;
+
+    cmdb_cmd(char *_cmdstr, int _subs, int _id, char *_parms, char *_cmddescr) {
+        cmdb_cmd(_cmdstr, _subs, _id, _parms, _cmddescr,"");
+    }
+
+    cmdb_cmd(char *_cmdstr, int _subs, int _id, char *_parms, char *_cmddescr, char *_parmdescr) {
+        strcpy(cmdstr,_cmdstr);
+        subs=_subs;
+        id=_id;
+        strcpy(parms,_parms);
+        strcpy(cmddescr,_cmddescr);
+        strcpy(parmdescr,_parmdescr);
+    }
 };
+
+//----Escape Codes and Strings
+
+const char cr           = '\r';
+const char lf           = '\n';
+const char bell         = '\7';
+const char esc          = '\033';
+const char sp           = ' ';
+const char crlf[]       = "\r\n\0";
+
+const char bs[]         = "\b \b\0";
+
+const char boldon[]     = "\033[1m\0";
+const char boldoff[]    = "\033[0m\0";
+const char cls[]        = "\033[2J\0";
+const char home[]       = "\033[H\0";
+
+const char prompt[]     = "CMD>";
 
 //Before including this file, define CID_LAST as the last value from the enum with commands.
 
@@ -84,23 +115,23 @@ struct cmdb_cmd {
 //You need to add the following commands to your command table.
 
 //Optional
-const cmdb_cmd BOOT =     { "Boot",           GLOBALCMD    ,CID_BOOT      ,""                 ,"Boot"                         ,""};
+const cmdb_cmd BOOT("Boot",GLOBALCMD,CID_BOOT,"","Boot");
 
 //Optional
-const cmdb_cmd MACRO =    { "Macro",          GLOBALCMD    ,CID_MACRO     ,"%s"               ,"Define macro (sp->_, cr->|)"  ,"command(s)"};
-const cmdb_cmd RUN =      { "Run",            GLOBALCMD    ,CID_RUN       ,""                 ,"Run a macro"                  ,""};
-const cmdb_cmd MACROS =   { "Macros",         GLOBALCMD    ,CID_MACROS    ,""                 ,"List macro(s)"                ,""};
+const cmdb_cmd MACRO("Macro",GLOBALCMD,CID_MACRO,"%s","Define macro (sp->_, cr->|)","command(s)");
+const cmdb_cmd RUN("Run",GLOBALCMD,CID_RUN,"","Run a macro");
+const cmdb_cmd MACROS("Macros",GLOBALCMD,CID_MACROS,"","List macro(s)");
 
 //Optional
-const cmdb_cmd ECHO =     { "Echo",           GLOBALCMD    ,CID_ECHO      ,"%bu"              ,"Echo On|Off (1|0)"            ,"state"};
-const cmdb_cmd BOLD =     { "Bold",           GLOBALCMD    ,CID_BOLD      ,"%bu"              ,"Bold On|Off (1|0)"            ,"state"};
-const cmdb_cmd CLS  =     { "Cls",            GLOBALCMD    ,CID_CLS       ,""                 ,"Clears the terminal screen"   ,""};
+const cmdb_cmd ECHO("Echo",GLOBALCMD,CID_ECHO,"%bu","Echo On|Off (1|0)","state");
+const cmdb_cmd BOLD("Bold",GLOBALCMD,CID_BOLD,"%bu","Bold On|Off (1|0)","state");
+const cmdb_cmd CLS("Cls",GLOBALCMD,CID_CLS,"","Clears the terminal screen");
 
 //Mandatory!
-const cmdb_cmd IDLE =     { "Idle",           GLOBALCMD    ,CID_IDLE      ,""                 ,"Deselect Subsystems"          ,""};
+const cmdb_cmd IDLE("Idle",GLOBALCMD,CID_IDLE,"","Deselect Subsystems");
 
 //Mandatory!
-const cmdb_cmd HELP =     { "Help",           GLOBALCMD    ,CID_HELP      ,"%s"               ,"Help"                         ,""};
+const cmdb_cmd HELP("Help",GLOBALCMD,CID_HELP,"%s","Help");
 
 #define ESC_TBL_LEN  4
 
@@ -109,7 +140,7 @@ struct esc_st {
     int     id;
 };
 
-const enum {
+enum {
     EID_CURSOR_UP,
     EID_CURSOR_DOWN,
     EID_CURSOR_RIGHT,
@@ -389,23 +420,6 @@ private:
     int     argfnd;                                     //No of arguments to find in parameter definition.
     int     error;                                      //strtoXX() Error detection
 
-//----Escape Codes and Strings
-
-    const char cr           = '\r';
-    const char lf           = '\n';
-    const char bell         = '\7';
-    const char esc          = '\033';
-    const char sp           = ' ';
-    const char crlf[]       = "\r\n\0";
-
-    const char bs[]         = "\b \b\0";
-
-    const char boldon[]     = "\033[1m\0";
-    const char boldoff[]    = "\033[0m\0";
-    const char cls[]        = "\033[2J\0";
-    const char home[]       = "\033[H\0";
-
-    const char prompt[]     = "CMD>";
 };
 
 #endif
