@@ -211,6 +211,16 @@ public:
      */
     char cmdb_next();
 
+    /** Add a character to the command being processed. 
+     * If a cr is added, the command is parsed and executed if possible
+     * If supported special keys are encountered (like backspace, delete and cursor up) they are processed.
+     *
+     * @parmam c the character to add.
+     *
+     * @returns true if a command was recognized and executed.
+     */
+    bool cmdb_scan(const char c);
+
 private:
     /** Searches the escape code list for a match.
      *
@@ -246,17 +256,7 @@ private:
      *
      */
     void cmdb_prompt(void);
-    
-    /** Add a character to the command being processed. 
-     * If a cr is added, the command is parsed and executed if possible
-     * If supported special keys are encountered (like backspace, delete and cursor up) they are processed.
-     *
-     * @parmam c the character to add.
-     *
-     * @returns true if a command was recognized and executed.
-     */
-    bool cmdb_scan(const char c);
-    
+        
     /** Called by cmdb_cmd_proc it parses the command against the command table.
      * 
      * @param cmd the command and paramaters to parse.
