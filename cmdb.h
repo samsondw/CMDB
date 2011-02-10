@@ -144,17 +144,17 @@ const struct esc_st esc_tbl [ESC_TBL_LEN] = {
 
 //Define a const struct cmbd_cmd cmdb_tbl [CMD_TBL_LEN] {}; that is passed into the constructor.
 
-/** Command Interpreter class.
- *
- * Steps to take:
- *
- * 1) Create a std::vector<cmdb_cmd> and fill it with at least
- *    the mandatory commands IDLE and HELP.
- * 2) Create an Cmdb class instance and pass it both the vector and
- *    a Serial port object like Serial serial(USBTX, USBRX);
- * 3) Feed the interpreter with characters received from your serial port.
- *    Note Cmdb self does not retrieve input it must be handed to it
- * 4) Handle commands added by the application by the Id and parameters passed.
+/** Command Interpreter class.<br/>
+ * <br/>
+ * Steps to take:<br/>
+ * <br/>
+ * 1) Create a std::vector<cmdb_cmd> and fill it with at least<br/>
+ *    the mandatory commands IDLE and HELP.<br/>
+ * 2) Create an Cmdb class instance and pass it both the vector and<br/>
+ *    a Serial port object like Serial serial(USBTX, USBRX);<br/>
+ * 3) Feed the interpreter with characters received from your serial port.<br/>
+ *    Note Cmdb self does not retrieve input it must be handed to it<br/>
+ * 4) Handle commands added by the application by the Id and parameters passed.<br/>
  *
  */
 class Cmdb {
@@ -195,12 +195,6 @@ public:
      */
     void cmdb_macro_reset();
 
-    /** Checks if the macro buffer has any characters.
-     *
-     * @returns true if any characters available.
-     */
-    bool cmdb_macro_hasnext();
-
     /** Checks if the serial port has any characters 
      * left to read by calling serial.readable().
      *
@@ -218,28 +212,73 @@ public:
     char cmdb_next();
 
 private:
-    //Utilities.
-    /** Checks if the macro buffer has any characters left.
+    /** Searches the escape code list for a match.
      *
      * @param char* escstr the escape code to lookup.
      *
      * @returns the index of the escape code or -1.
      */
     int cmdb_escid_search(char *escstr);
+
+    /** Checks if the command table for a match.
+     *
+     * @param char* cmdstr the command to lookup.
+     *
+     * @returns the id of the command or -1.
+     */
     int cmdb_cmdid_search(char *cmdstr);
+
+    /** Converts an command id to an index of the command table.
+     *
+     * @param cmdid the command id to lookup.
+     *
+     * @returns the index of the command or -1.
+     */
     int  cmdb_cmdid_index(int cmdid);
 
-    //Parser.
+    /** Initializes the parser.
+     * 
+     * @parm full if true the macro buffer is also cleared else only the command interpreter is reset.
+     */
     void cmdb_init(const char full);
+    
+    /** Writes a prompt to the serial port.
+     *
+     */
     void cmdb_prompt(void);
+    
+    /** Add a character to the command being processed. 
+     * If a cr is added, the command is parsed and executed if possible
+     * If supported special keys are encountered (like backspace, delete and cursor up) they are processed.
+     *
+     * @parmam c the character to add.
+     *
+     * @returns true if a command was recognized and executed.
+     */
     bool cmdb_scan(const char c);
+    
+    /** Called by cmdb_cmd_proc it parses the command against the command table.
+     * 
+     * @param cmd the command and paramaters to parse.
+     * 
+     * @returns the id of the parsed command.
+     */
     int cmdb_parse(char *cmd);
 
-    //Command Processor.
     //TODO Must call Callback function.
+
+    /** Called by cmdb_scan it processes the arguments and Executes the command.
+     *
+     * @param cmd the command to execute.
+     */
     void cmdb_cmd_proc(char *cmd);
 
-    //Help
+    /** Generates Help from the command table and prints it.
+     * 
+     * @param pre leading text
+     * @param ndx the index of the command in the command table.
+     * @param post trailing text.
+     */
     void cmdb_cmdhelp(char *pre, int ndx, char *post);
 
     //Output.
