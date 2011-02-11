@@ -212,6 +212,10 @@ const char PROMPT[]     = "CMD>";
  */
 #define HIDDENSUB         -3
 
+/** Predefined Dump Command.
+ */
+#define CID_COMMANDS 9989
+
 /** Predefined Boot Command.
  */
 #define CID_BOOT    9990
@@ -275,9 +279,17 @@ const char PROMPT[]     = "CMD>";
 
 /** The Boot Command.
  *
+ * @note: this command can be used to list all commands in Windows ini file format for host processing.
+ *
  * Optional.
  */
-const cmd BOOT("Boot",GLOBALCMD,CID_BOOT,"","Boot");
+const cmd COMMANDS("Commands",GLOBALCMD,CID_COMMANDS,"","Dump Commands");
+
+/** The Boot Command.
+ *
+ * Optional.
+ */
+const cmd BOOT("Boot",GLOBALCMD,CID_BOOT,"","Boot mBed");
 
 /** The Macro Command.
  *
@@ -363,7 +375,7 @@ const struct esc esc_tbl [ESC_TBL_LEN] = {
 
 /** The Command Interpreter Version.
  */
-#define CMDB_VERSION     0.71
+#define CMDB_VERSION     0.72
 
 //------------------------------------------------------------------------------
 
@@ -687,7 +699,11 @@ private:
      * @param ndx the index of the command in the command table.
      * @param post trailing text.
      */
-    void cmdhelp(char *pre, int ndx, char *post);
+    void cmd_help(char *pre, int ndx, char *post);
+
+    /** Dumps all commands in ini file format.
+     */
+    void cmd_dump();
 
     /** memset wrapper.
      *

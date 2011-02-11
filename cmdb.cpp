@@ -22,6 +22,7 @@ _____________________________________________________________________________
             -Added MAX_LONG and MIN_LONG (long==int on mbed).
             -Removed cmdb_ prefix from members.
             -Tested Macro Support and added it to the Demo.
+            -Added CID_COMMANDS.
    -------- --------------------------------------------------------------
    TODO's
    10022011 -Tweak and Review Documentation.
@@ -585,7 +586,7 @@ void  Cmdb::cmd_dispatcher(char *cmd) {
         if (cid==CID_LAST) {
             print("Unknown command, type 'Help' for a list of available commands.\r\n");
         } else {
-            //printf("cmds[%d]=%d [%s]\r\n",ndx, cid, _cmds[ndx].cmdstr);
+            //printf("cmds[%d]=%d [%s]\r\n",ndx, cid, cmds[ndx].cmdstr);
 
             //Test for more commandline than allowed too.
             //i.e. run 1 is wrong.
@@ -602,10 +603,10 @@ void  Cmdb::cmd_dispatcher(char *cmd) {
                         //Define Macro from commandline
                     case CID_MACRO:
                         macro_ptr=-1;
-                       
+
                         zeromemory((char*)macro_buf, sizeof(macro_buf));
                         strncpy(macro_buf, STRINGPARM(0), sizeof(macro_buf) - 1);
-                        
+
                         //DEBUG
                         printf("Macro=%s\r\n",macro_buf);
                         break;
@@ -638,6 +639,9 @@ void  Cmdb::cmd_dispatcher(char *cmd) {
 #endif
 
                         /////// GLOBAL COMMANDS ///////
+                    case CID_COMMANDS:
+                        cmd_dump();
+                        break;
 
                         //Echo
                     case CID_ECHO:
@@ -696,9 +700,9 @@ void  Cmdb::cmd_dispatcher(char *cmd) {
                                         if (cmds[i].subs==cid) {
                                             subcmds--;
                                             if (subcmds!=0) {
-                                                cmdhelp("",i,",\r\n");
+                                                cmd_help("",i,",\r\n");
                                             } else {
-                                                cmdhelp("",i,".\r\n");
+                                                cmd_help("",i,".\r\n");
                                             }
                                         }
                                     }
@@ -707,12 +711,12 @@ void  Cmdb::cmd_dispatcher(char *cmd) {
 
                                 case GLOBALCMD: //Dump command only
                                     //print("Global command:\r\n\r\n",cmd_tbl[cmd_tbl[ndx].subs].cmdstr);
-                                    cmdhelp("Syntax: ",ndx,".\r\n");
+                                    cmd_help("Syntax: ",ndx,".\r\n");
                                     break;
 
                                 default:        //Dump one subsystem command
                                     printf("%s subsystem command:\r\n\r\n",cmds[cmds[ndx].subs].cmdstr);
-                                    cmdhelp("Syntax: ",ndx,".\r\n");
+                                    cmd_help("Syntax: ",ndx,".\r\n");
                                     break;
                             }
                         } else {
@@ -726,10 +730,10 @@ void  Cmdb::cmd_dispatcher(char *cmd) {
                                 //-1 because we want comma's and for the last a .
                                 for (int i=0;i<cmds.size()-1;i++) {
                                     if ((cmds[i].subs<0) || (cmds[i].subs==subsystem)) {
-                                        cmdhelp("",i,",\r\n");
+                                        cmd_help("",i,",\r\n");
                                     }
                                 }
-                                cmdhelp("",cmds.size()-1,".\r\n");
+                                cmd_help("",cmds.size()-1,".\r\n");
                             }
                         }
                         print("\r\n");
@@ -742,7 +746,7 @@ void  Cmdb::cmd_dispatcher(char *cmd) {
                     }
                 }
             } else {
-                cmdhelp("Syntax: ",ndx,".\r\n");
+                cmd_help("Syntax: ",ndx,".\r\n");
             }
 
         }
@@ -752,12 +756,170 @@ void  Cmdb::cmd_dispatcher(char *cmd) {
     }
 }
 
+//------------------------------------------------------------------------------
+//----Dump commands table as a ini file.
+//------------------------------------------------------------------------------
+
+void Cmdb::cmd_dump() {
+    int  ndx;
+    int  j;
+    int  k;
+    int  lastmod;
+
+    k = 0;
+    lastmod = 0;
+
+    for (ndx=0;ndx<cmds.size();ndx++) {
+
+#ifndef SHOWHIDDEN
+        if (cmds[ndx].subs==HIDDENSUB) {
+            continue;
+        }
+#endif
+
+        switch (cmds[ndx].subs) {
+            case SUBSYSTEM :
+                printf("[command%2.2d]\r\n",ndx+1);
+                print("type=Subsystem\r\n");
+                print("subsystem=Global\r\n");
+                break;
+            case HIDDENSUB :
+#ifdef SHOWHIDDEN
+                printf("[command%2.2d]\r\n",ndx+1);
+                print("type=HiddenSubystem\r\n");
+                print("subsystem=Global\r\n");
+#endif
+                break;
+            case GLOBALCMD :
+                printf("[command%2.2d]\r\n",ndx+1);
+                print("type=GlobalCommand\r\n");
+                print("subsystem=Global\r\n");
+                break;
+            default        :
+                if (cmds[cmds[ndx].subs].subs==HIDDENSUB) {
+#ifdef SHOWHIDDEN
+                    printf("[command%2.2d]\r\n",ndx+1);
+                    print("type=HiddenCommand\r\n");
+                    print("subsystem=HiddenSubystem\r\n");
+#endif
+                    continue;
+                }
+                printf("[command%2.2d]\r\n",ndx+1);
+                print("type=Command\r\n");
+                printf("subsystem=%s\r\n",cmds[cmds[ndx].subs].cmdstr);
+                break;
+        }
+
+        if (cmds[ndx].subs==HIDDENSUB) {
+            continue;
+        }
+
+        printf("command=%s\r\n",cmds[ndx].cmdstr);
+        printf("helpmsg=%s\r\n",cmds[ndx].cmddescr);
+        print("parameters=");
+        for (j=0;j<strlen(cmds[ndx].parms);j++) {
+            switch (cmds[ndx].parms[j]) {
+                case '%' :
+                    lastmod=0;
+                    break;
+
+                case 'b' :
+                    lastmod=8;
+                    break;
+                case 'h' :
+                    lastmod=16;
+                    break;
+                case 'l' :
+                    lastmod=32;
+                    break;
+
+                case 'd' :
+                case 'i' :     {
+                    switch (lastmod) {
+                        case  0 :
+                        case 16 :
+                            print("int");
+                            k+=3;
+                            break;
+                        case  8 :
+                            print("shortint");
+                            k+=8;
+                            break;
+                        case 32:
+                            print("longint");
+                            k+=7;
+                            break;
+                    }
+                    break;
+                }
+
+                case 'u' :
+                case 'o' :
+                case 'x' :     {
+                    switch (lastmod) {
+                        case  0 :
+                        case 16 :
+                            print("word");
+                            k+=4;
+                            break;
+                        case  8 :
+                            print("byte");
+                            k+=4;
+                            break;
+                        case 32 :
+                            print("dword");
+                            k+=5;
+                            break;
+                    }
+
+                    switch (cmds[ndx].parms[j]) {
+                        case 'o' :
+                            print("[o]");
+                            k+=3;
+                            break;
+                        case 'x' :
+                            print("[h]");
+                            k+=3;
+                            break;
+                    }
+
+                    break;
+                }
+
+                case 'e' :
+                case 'f' :
+                case 'g' :
+                    print("float");
+                    k+=5;
+                    break;
+
+                case 'c' :
+                    print("char");
+                    k+=4;
+                    break;
+
+                case 's' :
+                    print("string");
+                    k+=6;
+                    break;
+
+                case ' ' :
+                    printch(sp);
+                    k++;
+                    break;
+            }
+        }
+        print("\r\n");
+        printf("syntax=%s\r\n",cmds[ndx].parmdescr);
+    }
+}
+
 void  Cmdb::prompt(void) {
 #ifdef SUBSYSTEMPROMPTS
     if (subsystem!=-1) {
         int ndx = cmdid_index(subsystem);
 
-        printf("%s>",_cmds[ndx].cmdstr);
+        printf("%s>",cmds[ndx].cmdstr);
 
         return;
     }
@@ -766,7 +928,7 @@ void  Cmdb::prompt(void) {
     printf(PROMPT);
 }
 
-void  Cmdb::cmdhelp(char *pre, int ndx, char *post) {
+void  Cmdb::cmd_help(char *pre, int ndx, char *post) {
     int  j;
     int  k;
     int  lastmod;

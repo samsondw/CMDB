@@ -44,6 +44,7 @@ int main() {
     cmds.push_back(c2); //The Int Command is handled by our 'my_dispatcher' method.
 
     //Add some predefined...
+    cmds.push_back(COMMANDS); //Handled by Cmdb internally.
     cmds.push_back(BOOT); //Handled by Cmdb internally.
 
     cmds.push_back(ECHO); //Handled by Cmdb internally.
