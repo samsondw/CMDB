@@ -121,6 +121,11 @@ public:
     char *cmddescr;
     char *parmdescr;
 
+    /** Default Constructor.
+     */
+    cmd() {
+    }
+
     /** Command Constructor.
      *
      * @parm _cmdstr the command, not case sensitive.
@@ -375,7 +380,7 @@ const struct esc esc_tbl [ESC_TBL_LEN] = {
 
 /** The Command Interpreter Version.
  */
-#define CMDB_VERSION     0.72
+#define CMDB_VERSION     0.73
 
 //------------------------------------------------------------------------------
 
