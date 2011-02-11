@@ -380,7 +380,7 @@ const struct esc esc_tbl [ESC_TBL_LEN] = {
 
 /** The Command Interpreter Version.
  */
-#define CMDB_VERSION     0.73
+#define CMDB_VERSION     0.74
 
 //------------------------------------------------------------------------------
 
