@@ -54,6 +54,7 @@
 //TODO Make sure we use id and array index properly!!
 
 struct cmdb_cmd {
+public:
     char *cmdstr;
     int  subs;
     int  id;                                            //Changed to int as signed char won't compile
@@ -61,16 +62,20 @@ struct cmdb_cmd {
     char *cmddescr;
     char *parmdescr;
 
-    cmdb_cmd(char *_cmdstr, int _subs, int _id, char *_parms, char *_cmddescr) {
-        cmdb_cmd(_cmdstr, _subs, _id, _parms, _cmddescr,"");
-    }
-
-    cmdb_cmd(char *_cmdstr, int _subs, int _id, char *_parms, char *_cmddescr, char *_parmdescr) {
+    cmdb_cmd(char *_cmdstr, int _subs, int _id, char *_parms, char *_cmddescr, char *_parmdescr = "") {
+        cmdstr = (char*)malloc(strlen(_cmdstr)+1);
         strcpy(cmdstr,_cmdstr);
-        subs=_subs;
-        id=_id;
+
+        subs = _subs;
+        id = _id;
+
+        parms = (char*)malloc(strlen(_parms)+1);
         strcpy(parms,_parms);
+
+        cmddescr = (char*)malloc(strlen(_cmddescr)+1);
         strcpy(cmddescr,_cmddescr);
+
+        parmdescr = (char*)malloc(strlen(_parmdescr)+1);
         strcpy(parmdescr,_parmdescr);
     }
 };
@@ -101,16 +106,17 @@ const char prompt[]     = "CMD>";
 #define GLOBALCMD         -2
 #define HIDDENSUB         -3
 
-#define CID_BOOT    9991
-#define CID_MACRO   9992
-#define CID_RUN     9993
-#define CID_MACROS  9994
+#define CID_BOOT    9990
+#define CID_MACRO   9991
+#define CID_RUN     9992
+#define CID_MACROS  9993
 
-#define CID_ECHO    9995
-#define CID_BOLD    9996
-#define CID_CLS     9997
-#define CID_IDLE    9998
-#define CID_HELP    9999
+#define CID_ECHO    9994
+#define CID_BOLD    9995
+#define CID_CLS     9996
+#define CID_IDLE    9997
+#define CID_HELP    9998
+#define CID_LAST    9999
 
 //You need to add the following commands to your command table.
 
@@ -155,6 +161,11 @@ const struct esc_st esc_tbl [ESC_TBL_LEN] = {
     { "\033[D",    EID_CURSOR_LEFT  },
 };
 
+//class Cmdb;
+
+//See http://stackoverflow.com/questions/9410/how-do-you-pass-a-function-as-a-parameter-in-c
+//void func ( void (*f)(Cmdb&, int) );
+
 //Define a const struct cmbd_cmd cmdb_tbl [CMD_TBL_LEN] {}; that is passed into the constructor.
 
 /** Command Interpreter class.<br/>
@@ -174,10 +185,12 @@ class Cmdb {
 public:
     /** Create a Command Interpreter.
      *
+     * See http://www.newty.de/fpt/fpt.html#chapter2 for function pointers.
+     *
      * @param serial a Serial port used for communication.
      * @param cmds a vector with the command table.
      */
-    Cmdb(const Serial serial, const std::vector<cmdb_cmd>& cmds);
+    Cmdb(const Serial& serial, const std::vector<cmdb_cmd>& cmds, void (*cmdb_callback)(Cmdb&,int) );
 
     /** Checks if the macro buffer has any characters left.
      *
@@ -234,124 +247,10 @@ public:
      */
     bool cmdb_scan(const char c);
 
-private:
-    /** Searches the escape code list for a match.
-     *
-     * @param char* escstr the escape code to lookup.
-     *
-     * @returns the index of the escape code or -1.
-     */
-    int cmdb_escid_search(char *escstr);
-
-    /** Checks if the command table for a match.
-     *
-     * @param char* cmdstr the command to lookup.
-     *
-     * @returns the id of the command or -1.
-     */
-    int cmdb_cmdid_search(char *cmdstr);
-
-    /** Converts an command id to an index of the command table.
-     *
-     * @param cmdid the command id to lookup.
-     *
-     * @returns the index of the command or -1.
-     */
-    int  cmdb_cmdid_index(int cmdid);
-
-    /** Initializes the parser.
-     *
-     * @parm full if true the macro buffer is also cleared else only the command interpreter is reset.
-     */
-    void cmdb_init(const char full);
-
-    /** Writes a prompt to the serial port.
-     *
-     */
-    void cmdb_prompt(void);
-
-    /** Called by cmdb_cmd_proc it parses the command against the command table.
-     *
-     * @param cmd the command and paramaters to parse.
-     *
-     * @returns the id of the parsed command.
-     */
-    int cmdb_parse(char *cmd);
-
-    //TODO Must call Callback function.
-
-    /** Called by cmdb_scan it processes the arguments and Executes the command.
-     *
-     * @param cmd the command to execute.
-     */
-    void cmdb_cmd_proc(char *cmd);
-
-    /** Generates Help from the command table and prints it.
-     *
-     * @param pre leading text
-     * @param ndx the index of the command in the command table.
-     * @param post trailing text.
-     */
-    void cmdb_cmdhelp(char *pre, int ndx, char *post);
-
     //Output.
     int cmdb_printf(const char *format, ...);
     int cmdb_print(const char *msg);
     char cmdb_printch(const char ch);
-
-    //Utilities.
-    void zeromemory(char *p,unsigned int siz);
-    int stricmp (char *s1, char *s2);
-
-
-    //Storage, see http://www.cplusplus.com/reference/stl/vector/
-    std::vector<cmdb_cmd> _cmds;
-    Serial _serial;
-    bool echo;
-    bool bold;
-
-    int CID_LAST;
-    int CMD_TBL_LEN;
-
-    //Macro's.
-    int macro_ptr;
-    char macro_buf[1 + MAX_CMD_LEN];
-
-    enum parmtype {
-        PARM_UNUSED,            //0
-
-        PARM_FLOAT,             //1     (f)
-
-        PARM_LONG,              //2     (l/ul)
-        PARM_INT,               //3     (i/ui)
-        PARM_SHORT,             //4     (w/uw)
-
-        PARM_CHAR,              //5     (c/uc)
-        PARM_STRING             //6     (s)
-    };
-
-    union value {
-        float               f;
-
-        unsigned long       ul;
-        long                 l;
-
-        int                  i;
-        unsigned int        ui;
-
-        short                w;
-        unsigned short      uw;
-
-        char                 c;
-        unsigned char       uc;
-
-        char                 s[MAX_PARM_LEN];
-    };
-
-    struct parm {
-        enum parmtype    type;
-        union value     val;
-    };
 
 //------------------------------------------------------------------------------
 //----These helper functions retieve parameters in the correct format.
@@ -398,6 +297,128 @@ private:
     char* STRINGPARM(int ndx) {
         return parms[ndx].val.s;
     }
+
+private:
+    //See http://www.newty.de/fpt/fpt.html#chapter2 for function pointers.
+     
+    //C++ member
+    //void (Cmdb::*cmdb_callback)(Cmdb&,int);
+
+    //C function
+    void (*cmdb_callback)(Cmdb&,int);
+
+    //void(*_cmdb_callback)(Cmdb&,int);
+
+    /** Searches the escape code list for a match.
+    *
+    * @param char* escstr the escape code to lookup.
+    *
+    * @returns the index of the escape code or -1.
+    */
+    int cmdb_escid_search(char *escstr);
+
+    /** Checks if the command table for a match.
+     *
+     * @param char* cmdstr the command to lookup.
+     *
+     * @returns the id of the command or -1.
+     */
+    int cmdb_cmdid_search(char *cmdstr);
+
+    /** Converts an command id to an index of the command table.
+     *
+     * @param cmdid the command id to lookup.
+     *
+     * @returns the index of the command or -1.
+     */
+    int  cmdb_cmdid_index(int cmdid);
+
+    /** Initializes the parser.
+     *
+     * @parm full if true the macro buffer is also cleared else only the command interpreter is reset.
+     */
+    void cmdb_init(const char full);
+
+    /** Writes a prompt to the serial port.
+     *
+     */
+    void cmdb_prompt(void);
+
+    /** Called by cmdb_cmd_dispatch it parses the command against the command table.
+     *
+     * @param cmd the command and paramaters to parse.
+     *
+     * @returns the id of the parsed command.
+     */
+    int cmdb_parse(char *cmd);
+
+    /** Called by cmdb_scan it processes the arguments and dispatches the command.
+     *
+     * Note: This member calls the cmdb_callback callback function.
+     *
+     * @param cmd the command to dispatch.
+     */
+    void cmdb_cmd_dispatcher(char *cmd);
+
+    /** Generates Help from the command table and prints it.
+     *
+     * @param pre leading text
+     * @param ndx the index of the command in the command table.
+     * @param post trailing text.
+     */
+    void cmdb_cmdhelp(char *pre, int ndx, char *post);
+
+    //Utilities.
+    void zeromemory(char *p,unsigned int siz);
+    int stricmp (char *s1, char *s2);
+
+    //Storage, see http://www.cplusplus.com/reference/stl/vector/
+    std::vector<cmdb_cmd> _cmds;
+    Serial _serial;
+    bool echo;
+    bool bold;
+
+    int CMD_TBL_LEN;
+
+    //Macro's.
+    int macro_ptr;
+    char macro_buf[1 + MAX_CMD_LEN];
+
+    enum parmtype {
+        PARM_UNUSED,            //0
+
+        PARM_FLOAT,             //1     (f)
+
+        PARM_LONG,              //2     (l/ul)
+        PARM_INT,               //3     (i/ui)
+        PARM_SHORT,             //4     (w/uw)
+
+        PARM_CHAR,              //5     (c/uc)
+        PARM_STRING             //6     (s)
+    };
+
+    union value {
+        float               f;
+
+        unsigned long       ul;
+        long                 l;
+
+        int                  i;
+        unsigned int        ui;
+
+        short                w;
+        unsigned short      uw;
+
+        char                 c;
+        unsigned char       uc;
+
+        char                 s[MAX_PARM_LEN];
+    };
+
+    struct parm {
+        enum parmtype    type;
+        union value     val;
+    };
 
 //------------------------------------------------------------------------------
 //----Buffers

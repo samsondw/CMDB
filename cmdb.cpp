@@ -1,3 +1,27 @@
+/*
+_____________________________________________________________________________
+
+   Project:     mBed Command Interpreter
+   Filename:    cmdb.h
+   Version:     0.5.0
+_____________________________________________________________________________
+   Date         Comment
+   -------- --------------------------------------------------------------
+   10022011 -Rewritten into C++ class.
+            -Pass Serial into constructor for printf, putc and getc.
+            -CID_<subsystem> must be handled internally.
+            -Fixed a number of old Index/Id conflicts.
+            -Got a working version. Much work to be done though.
+            -Handle CID_HELP internally (like all system commands (IDLE/MACRO etc).
+            -Defined CID_LAST as Vector Size or Last Command Id fails.
+   -------- --------------------------------------------------------------
+   TODO's
+   04022011 -ADD Documentation.
+            -
+   -------- --------------------------------------------------------------
+_____________________________________________________________________________
+*/
+
 #include <vector>
 #include <stdlib.h>
 #include <stdio.h>
@@ -8,22 +32,24 @@
 #include "cmdb.h"
 #include "mbed.h"
 
-//DONE Pass Serial into constructor for printf, putc and getc.
-//DONE CID_<subsystem> must be handled internally.
-//
-//TODO ADD Documentation.
-//TODO CID_HELP must be handled internally (like all system commands (IDLE/MACRO etc).
-//TODO CID_HELP should be function (so we can call it easier in the switche's else branch).
-//TODO Link CID_LAST to Vector Size.
-
 //Constructor (see http://www.daniweb.com/forums/thread293338.html)
-Cmdb::Cmdb(const Serial serial, const std::vector<cmdb_cmd>& cmds) :  _serial(serial), _cmds(cmds) {
+Cmdb::Cmdb(const Serial& serial, const std::vector<cmdb_cmd>& cmds, void (*callback)(Cmdb&,int)) : 
+    _serial(serial), _cmds(cmds) {
     echo = true;
     bold = true;
     subsystem = -1;
+    
+    cmdb_callback = callback;
+    
+    //CID_LAST  = _cmds.back().id;
+    CMD_TBL_LEN = _cmds.size();
 
-    CID_LAST = _cmds.back().id;
-    CMD_TBL_LEN = cmds.size();
+    cmdb_printf("CID_LAST=%d\r\n",CID_LAST);
+    cmdb_printf("CMD_TBL_LEN=%d\r\n",CMD_TBL_LEN);
+
+    for (int i=0;i<CMD_TBL_LEN;i++) {
+        cmdb_printf("%d=%s\r\n",_cmds[i].id, _cmds[i].cmdstr);
+    }
 
     cmdb_init(true);
 }
@@ -35,9 +61,11 @@ bool  Cmdb::cmdb_macro_hasnext() {
 
 char Cmdb::cmdb_macro_next() {
     char ch = macro_buf[macro_ptr++];
+
     if (macro_ptr==MAX_CMD_LEN) {
         cmdb_macro_reset();
     }
+
     return ch;
 }
 
@@ -72,11 +100,11 @@ int  Cmdb::cmdb_escid_search(char *escstr) {
 int  Cmdb::cmdb_cmdid_search(char *cmdstr) {
     //Warning, we return the ID but somewhere assume it's equal to the array index!
     for (int i=0; i<CMD_TBL_LEN; i++) {
-        if ((stricmp (_cmds[i].cmdstr, cmdstr) == 0) && ((_cmds[i].subs == subsystem) || (_cmds[i].subs<0)))
+        if ((stricmp(_cmds[i].cmdstr, cmdstr) == 0) && ((_cmds[i].subs == subsystem) || (_cmds[i].subs<0)))
             return (_cmds[i].id);
     }
 
-    return (CID_LAST);
+    return CID_LAST;
 }
 
 int  Cmdb::cmdb_cmdid_index(int cmdid) {
@@ -115,23 +143,20 @@ int Cmdb::cmdb_parse(char *cmd) {
 
     char* endptr;                                               //strtoXX() Error detection
 
-    signed char id;
-    unsigned int  i;
+    int cid = -1;                                               //Signals empty string...
+    int ndx = -1;
 
     //Init (global) variables.
     argfnd=0;
     argcnt=0;
     error =0;
 
-    //Signals empty string...
-    id=-1;
-
     //Zero the two string buffers for splitting cmd string into.
     zeromemory((char*)cmdstr_buf,sizeof(cmdstr_buf));
     zeromemory(argstr_buf,sizeof(argstr_buf));
 
     //Make it worse in Lint
-    for (i=0;i<MAX_ARGS;i++) {
+    for (int i=0;i<MAX_ARGS;i++) {
         parms[i].type=PARM_UNUSED;
         zeromemory((char*)&(parms[i].val),sizeof(parms[i].val));
     }
@@ -161,23 +186,22 @@ int Cmdb::cmdb_parse(char *cmd) {
     }
 
     /*------------------------------------------------
-    Search for a command ID, then switch on it.  Note
-    that I removed my action items for each command,
-    but you would invoke each function here.
-    VEG:Watch out ID  not neccesarily equal to Array Index!
+    Search for a command ID, then switch on it.
     ------------------------------------------------*/
 
     //1) Find the Command Id
-    id = cmdb_cmdid_search(cmdstr_buf);
+    cid = cmdb_cmdid_search(cmdstr_buf);
 
-    if (id!=CID_LAST) {
+    if (cid!=CID_LAST) {
         //2) Tokenize a copy of the parms from the cmd_tbl.
+
+        ndx = cmdb_cmdid_index(cid);
 
         //Get Format patterns from cmd_tbl[id].parms.
         //Note: strtok inserts \0 into the original string. Hence the copy.
         zeromemory((char *)(&prmstr_buf),sizeof(prmstr_buf));
 
-        strncpy (prmstr_buf, _cmds[id].parms, sizeof (prmstr_buf) - 1);
+        strncpy (prmstr_buf, _cmds[ndx].parms, sizeof (prmstr_buf) - 1);
 
         argcnt=0;
         tok = strtok(prmstr_buf, " ");
@@ -212,11 +236,11 @@ int Cmdb::cmdb_parse(char *cmd) {
             tok = strtok(NULL, " ");
         }
 
-        if (argfnd==argcnt || (id==CID_HELP && argfnd==0)) {
+        if (argfnd==argcnt || (cid==CID_HELP && argfnd==0)) {
 
             error = 0;
 
-            for (i=0;i<argcnt;i++) {
+            for (int i=0;i<argcnt;i++) {
                 //cmdb_printf("prm_%2.2d=%s\r\n",i, prms[i]);
 
                 switch (strlen(prms[i])) {
@@ -346,14 +370,14 @@ int Cmdb::cmdb_parse(char *cmd) {
                 }
             }
         } else {
-            //id=CID_LAST;
+           cid=CID_LAST;
         }
     }
 
-    return id;
+    return cid;
 }
 
-void  Cmdb::cmdb_cmd_proc(char *cmd) {
+void  Cmdb::cmdb_cmd_dispatcher(char *cmd) {
     int  cid;
     int  ndx;
 
@@ -361,6 +385,7 @@ void  Cmdb::cmdb_cmd_proc(char *cmd) {
     ndx = cmdb_cmdid_index(cid);
 
     if (cid!=-1) {
+        //cmdb_printf("cmds[%d]=%d\r\n",ndx, cid);
 
         /*------------------------------------------------
         Process the command and it's arguments that are
@@ -373,13 +398,13 @@ void  Cmdb::cmdb_cmd_proc(char *cmd) {
         if (cid==CID_LAST) {
             cmdb_print("Unknown command, type 'Help' for a list of available commands.\r\n");
         } else {
+            //cmdb_printf("cmds[%d]=%d [%s]\r\n",ndx, cid, _cmds[ndx].cmdstr);
 
             //Test for more commandline than allowed too.
             //i.e. run 1 is wrong.
 
-            //TODO Fix Index/Id problem.
-
             if (argcnt==0 && argfnd==0 && error==0 && ndx!=-1 && _cmds[ndx].subs==SUBSYSTEM) {
+                //Handle all SubSystems.
                 subsystem=cid;
             } else if ( ((cid==CID_HELP) || (argcnt==argfnd)) && error==0 ) {
                 switch (cid) {
@@ -506,12 +531,21 @@ void  Cmdb::cmdb_cmd_proc(char *cmd) {
                         cmdb_print("\r\n");
                         break;
                     } //CID_HELP
+                    
+                    default : {
+                         (*cmdb_callback)(*this, cid);
+                    }
                 }
             } else {
                 cmdb_cmdhelp("Syntax: ",ndx,".\r\n");
             }
-        }
-    }
+
+        }// else {
+        //    cmdb_print("1Unknown command, type 'Help' for a list of available commands.\r\n");
+        //}
+    }// else {
+    //    cmdb_print("2Unknown command, type 'Help' for a list of available commands.\r\n");
+    //}
 }
 
 //Private Utilities #2
@@ -539,7 +573,8 @@ void  Cmdb::cmdb_init(const char full) {
 
 void  Cmdb::cmdb_prompt(void) {
     if (subsystem!=-1) {
-        cmdb_printf("%s>",_cmds[subsystem].cmdstr);
+        int ndx = cmdb_cmdid_index(subsystem);
+        cmdb_printf("%s>",_cmds[ndx].cmdstr);
     } else {
         cmdb_print(prompt);
     }
@@ -555,7 +590,8 @@ bool  Cmdb::cmdb_scan(const char c) {
         if (cmdndx) {
             strncpy(lstbuf,cmdbuf,cmdndx);
             lstbuf[cmdndx]='\0';
-            cmdb_cmd_proc(cmdbuf);
+            
+            cmdb_cmd_dispatcher(cmdbuf);
         }
         cmdb_init(false);
         cmdb_prompt();
