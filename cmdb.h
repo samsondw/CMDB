@@ -380,7 +380,7 @@ const struct esc esc_tbl [ESC_TBL_LEN] = {
 
 /** The Command Interpreter Version.
  */
-#define CMDB_VERSION     0.74
+#define CMDB_VERSION     0.75
 
 //------------------------------------------------------------------------------
 
@@ -651,7 +651,7 @@ private:
      *
      * C++ member equivalent would be void (Cmdb::*callback)(Cmdb&,int);
      */
-    void (*callback)(Cmdb&,int);
+    void (*user_callback)(Cmdb&,int);
 
     /** Searches the escape code list for a match.
     *

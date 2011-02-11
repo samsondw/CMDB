@@ -51,7 +51,7 @@ Cmdb::Cmdb(const Serial& serial, const std::vector<cmd>& cmds, void (*callback)(
 
     subsystem = -1;
 
-    callback = callback;
+    user_callback = callback;
 
     init(true);
 }
@@ -742,7 +742,7 @@ void  Cmdb::cmd_dispatcher(char *cmd) {
 
                     default : {
                         // Do a Call to the Application's Command Dispatcher.
-                        (*callback)(*this, cid);
+                        (*user_callback)(*this, cid);
                     }
                 }
             } else {
