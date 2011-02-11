@@ -14,10 +14,18 @@ _____________________________________________________________________________
             -Got a working version. Much work to be done though.
             -Handle CID_HELP internally (like all system commands (IDLE/MACRO etc).
             -Defined CID_LAST as Vector Size or Last Command Id fails.
+            -Removed CMD_TBL_LEN.
+            -CID_LAST is now defined as CID_HELP+1.
+            -Added Documentation.
+            -Added code to take number limits from the C++ Runtime instead of hard defined values.
+            -Renamed id to cid in cmd. 
+            -Added MAX_LONG and MIN_LONG (long==int on mbed).
+            -Removed cmdb_ prefix from members.
    -------- --------------------------------------------------------------
    TODO's
-   04022011 -ADD Documentation.
-            -
+   10022011 -Tweak and Review Documentation.
+   11022011 -Check & Test **PARM masks.
+            -Remove prefix from class members?
    -------- --------------------------------------------------------------
 _____________________________________________________________________________
 */
@@ -32,63 +40,229 @@ _____________________________________________________________________________
 #include "cmdb.h"
 #include "mbed.h"
 
-//Constructor (see http://www.daniweb.com/forums/thread293338.html)
-Cmdb::Cmdb(const Serial& serial, const std::vector<cmdb_cmd>& cmds, void (*callback)(Cmdb&,int)) : 
-    _serial(serial), _cmds(cmds) {
+//------------------------------------------------------------------------------
+
+Cmdb::Cmdb(const Serial& serial, const std::vector<cmd>& cmds, void (*callback)(Cmdb&,int)) :
+        serial(serial), cmds(cmds) {
     echo = true;
     bold = true;
+    
     subsystem = -1;
-    
-    cmdb_callback = callback;
-    
-    //CID_LAST  = _cmds.back().id;
-    CMD_TBL_LEN = _cmds.size();
 
-    cmdb_printf("CID_LAST=%d\r\n",CID_LAST);
-    cmdb_printf("CMD_TBL_LEN=%d\r\n",CMD_TBL_LEN);
+    callback = callback;
 
-    for (int i=0;i<CMD_TBL_LEN;i++) {
-        cmdb_printf("%d=%s\r\n",_cmds[i].id, _cmds[i].cmdstr);
-    }
-
-    cmdb_init(true);
+    init(true);
 }
 
-//Public
-bool  Cmdb::cmdb_macro_hasnext() {
+//------------------------------------------------------------------------------
+// Public Stuff.
+//------------------------------------------------------------------------------
+
+bool  Cmdb::macro_hasnext() {
     return macro_ptr!=-1 && macro_ptr<MAX_CMD_LEN && macro_buf[macro_ptr];
 }
 
-char Cmdb::cmdb_macro_next() {
+char Cmdb::macro_next() {
     char ch = macro_buf[macro_ptr++];
 
     if (macro_ptr==MAX_CMD_LEN) {
-        cmdb_macro_reset();
+        macro_reset();
     }
 
     return ch;
 }
 
-char  Cmdb::cmdb_macro_peek() {
+char  Cmdb::macro_peek() {
     return macro_buf[macro_ptr];
 }
 
-void  Cmdb::cmdb_macro_reset() {
+void  Cmdb::macro_reset() {
     macro_ptr         = -1;
     macro_buf[0]     = '\0';
 }
 
-bool  Cmdb::cmdb_hasnext() {
-    return _serial.readable()==1;
+//------------------------------------------------------------------------------
+
+bool  Cmdb::hasnext() {
+    return serial.readable()==1;
 }
 
-char  Cmdb::cmdb_next() {
-    return _serial.getc();
+char  Cmdb::next() {
+    return serial.getc();
 }
 
-//Private Utilities #1
+//------------------------------------------------------------------------------
 
-int  Cmdb::cmdb_escid_search(char *escstr) {
+bool  Cmdb::scan(const char c) {
+    int i;
+
+    //See http://www.interfacebus.com/ASCII_Table.html
+
+    if (c == '\r') {                                // cr?
+        print(crlf);                           // Output it and ...
+        if (cmdndx) {
+            strncpy(lstbuf,cmdbuf,cmdndx);
+            lstbuf[cmdndx]='\0';
+
+            cmd_dispatcher(cmdbuf);
+        }
+        init(false);
+        prompt();
+
+        return true;
+    }
+
+    //TODO BACKSPACE NOT CORRECT FOR TELNET!
+
+    if (c == '\b') {                                // Backspace
+        if (cmdndx != 0) {
+            print(bs);
+            cmdbuf [--cmdndx] = '\0';
+        } else {
+            printch(bell);                     // Output Error
+        }
+        return false;
+    }
+
+    if (c == '\177') {                              // Delete
+        while (cmdndx>0) {
+            print(bs);
+            cmdbuf [--cmdndx] = '\0';
+        }
+        return false;
+    }
+
+    //Reset Escape Buffer.
+    if (c == '\033') {
+        if (escndx!=0) {
+            //_putchar(bell);                       // Output Error
+            //printf("%s\r\n",escbuf);
+        }
+        escndx = 0;
+        escbuf [escndx] = '\0';                     // NULL-Terminate buffer
+    }
+
+    //Extract Escape Sequence.
+    if (c == '\033' || escndx ) {                   // Wait for escape
+        escbuf [escndx++] = (unsigned char) c;      // Add to the buffer
+        escbuf [escndx]   = '\0';                   // NULL-Terminate buffer
+        if (isalpha(c)) {
+            switch (escid_search(escbuf)) {
+                case EID_CURSOR_LEFT    : {
+                    if (cmdndx != 0) {   // Backspace?
+                        print(bs);
+                        cmdbuf [--cmdndx] = '\0';
+                    } else {
+                        printch(bell);             // Output char
+                    }
+                    break;
+                }
+                case EID_CURSOR_UP    : {
+                    for (i=0;i<cmdndx;i++) {
+                        print(bs);
+                    }
+                    cmdndx=strlen(lstbuf);
+                    strncpy(cmdbuf,lstbuf,cmdndx);
+                    cmdbuf[cmdndx]='\0';
+                    printf("%s",cmdbuf);
+                    break;
+                }
+                case EID_CURSOR_RIGHT:
+                    break;
+                case EID_CURSOR_DOWN    :
+                    break;
+                case EID_LAST            :
+                    break;
+                default                     :
+                    printch(bell);
+                    break;
+            }
+            escndx=0;
+            escbuf [escndx]   = '\0';               // NULL-Terminate buffer
+        }
+        return false;
+    }
+
+    if (c=='\n') {                                  // LF
+        return false;                               // Dump it
+    }
+
+    if (!isprint (c)) {                             // Printable character?
+        printch(bell);
+        return false;
+    }
+
+    if (cmdndx >= MAX_CMD_LEN) {                    // Past buffer length?
+        printch(bell);
+        return false;
+    }
+
+    cmdbuf [cmdndx++] = (unsigned char) c;          // Add to the buffer
+    cmdbuf [cmdndx]   = '\0';                       // NULL-Terminate buffer
+
+    if (echo) {
+        printch(c);                            // Output char
+    }
+
+    return false;
+}
+
+//------------------------------------------------------------------------------
+
+int   Cmdb::printf(const char *format, ...) {
+    int cnt;
+
+    va_list args;
+    char buf[1024];
+
+    memset(buf,'\0',sizeof(buf));
+
+    va_start(args, format);
+    cnt = vsnprintf(buf, sizeof(buf), format, args);
+    if (cnt==-1) {
+        //Error
+    }
+    va_end(args);
+
+    return print(buf);
+}
+
+int   Cmdb::print(const char *msg) {
+    return serial.printf(msg);
+}
+
+char  Cmdb::printch(const char ch) {
+    return serial.putc(ch);
+}
+
+//------------------------------------------------------------------------------
+
+void  Cmdb::init(const char full) {
+    if (full) {
+        echo = true;
+        bold = true;
+
+        subsystem = -1;
+
+        lstbuf [cmdndx] = '\0';
+
+        macro_reset();
+
+        prompt();
+    }
+
+    cmdndx = 0;
+    cmdbuf [cmdndx] = '\0';
+
+    escndx = 0;
+    escbuf [escndx] = '\0';
+}
+
+//------------------------------------------------------------------------------
+//Private Stuff.
+//------------------------------------------------------------------------------
+
+int  Cmdb::escid_search(char *escstr) {
     for (int i=0; i<ESC_TBL_LEN; i++) {
         if (strcmp (esc_tbl[i].escstr, escstr) == 0)
             return (esc_tbl[i].id);
@@ -97,26 +271,28 @@ int  Cmdb::cmdb_escid_search(char *escstr) {
     return (EID_LAST);
 }
 
-int  Cmdb::cmdb_cmdid_search(char *cmdstr) {
+int  Cmdb::cmdid_search(char *cmdstr) {
     //Warning, we return the ID but somewhere assume it's equal to the array index!
-    for (int i=0; i<CMD_TBL_LEN; i++) {
-        if ((stricmp(_cmds[i].cmdstr, cmdstr) == 0) && ((_cmds[i].subs == subsystem) || (_cmds[i].subs<0)))
-            return (_cmds[i].id);
+    for (int i=0; i<cmds.size(); i++) {
+        if ((stricmp(cmds[i].cmdstr, cmdstr) == 0) && ((cmds[i].subs == subsystem) || (cmds[i].subs<0)))
+            return (cmds[i].cid);
     }
 
     return CID_LAST;
 }
 
-int  Cmdb::cmdb_cmdid_index(int cmdid) {
-    for (int i=0; i<CMD_TBL_LEN; i++) {
-        if (_cmds[i].id==cmdid)
+int  Cmdb::cmdid_index(int cmdid) {
+    for (int i=0; i<cmds.size(); i++) {
+        if (cmds[i].cid==cmdid)
             return i;
     }
 
     return -1;
 }
 
-int Cmdb::cmdb_parse(char *cmd) {
+//------------------------------------------------------------------------------
+
+int Cmdb::parse(char *cmd) {
     //Command
     char cmdstr_buf [1 + MAX_CMD_LEN];
 
@@ -190,18 +366,18 @@ int Cmdb::cmdb_parse(char *cmd) {
     ------------------------------------------------*/
 
     //1) Find the Command Id
-    cid = cmdb_cmdid_search(cmdstr_buf);
+    cid = cmdid_search(cmdstr_buf);
 
     if (cid!=CID_LAST) {
         //2) Tokenize a copy of the parms from the cmd_tbl.
 
-        ndx = cmdb_cmdid_index(cid);
+        ndx = cmdid_index(cid);
 
         //Get Format patterns from cmd_tbl[id].parms.
-        //Note: strtok inserts \0 into the original string. Hence the copy.
+        //note: strtok inserts \0 into the original string. Hence the copy.
         zeromemory((char *)(&prmstr_buf),sizeof(prmstr_buf));
 
-        strncpy (prmstr_buf, _cmds[ndx].parms, sizeof (prmstr_buf) - 1);
+        strncpy (prmstr_buf, cmds[ndx].parms, sizeof (prmstr_buf) - 1);
 
         argcnt=0;
         tok = strtok(prmstr_buf, " ");
@@ -209,7 +385,7 @@ int Cmdb::cmdb_parse(char *cmd) {
             //Store Pointers
             prms[argcnt++] = tok;
 
-            //cmdb_printf("prm_%2.2d='%s'\r\n",argcnt, tok);
+            //printf("prm_%2.2d='%s'\r\n",argcnt, tok);
 
             tok = strtok(NULL, " ");
         }
@@ -231,7 +407,7 @@ int Cmdb::cmdb_parse(char *cmd) {
             //Store Pointers
             toks[argfnd++]=tok;
 
-            //cmdb_printf("tok_%2.2d='%s'\r\n",argfnd, tok);
+            //printf("tok_%2.2d='%s'\r\n",argfnd, tok);
 
             tok = strtok(NULL, " ");
         }
@@ -241,7 +417,7 @@ int Cmdb::cmdb_parse(char *cmd) {
             error = 0;
 
             for (int i=0;i<argcnt;i++) {
-                //cmdb_printf("prm_%2.2d=%s\r\n",i, prms[i]);
+                //printf("prm_%2.2d=%s\r\n",i, prms[i]);
 
                 switch (strlen(prms[i])) {
                     case 0:
@@ -311,7 +487,7 @@ int Cmdb::cmdb_parse(char *cmd) {
                                 parms[i].val.l=l;
 
                                 break;
-                            default:
+                            default: //int
                                 l=strtol((char*)toks[i], &endptr, base);
                                 if (l>=MIN_INT && l<=MAX_INT) {
                                     parms[i].type=PARM_INT;
@@ -370,22 +546,24 @@ int Cmdb::cmdb_parse(char *cmd) {
                 }
             }
         } else {
-           cid=CID_LAST;
+            cid=CID_LAST;
         }
     }
 
     return cid;
 }
 
-void  Cmdb::cmdb_cmd_dispatcher(char *cmd) {
+//------------------------------------------------------------------------------
+
+void  Cmdb::cmd_dispatcher(char *cmd) {
     int  cid;
     int  ndx;
 
-    cid = cmdb_parse(cmd);
-    ndx = cmdb_cmdid_index(cid);
+    cid = parse(cmd);
+    ndx = cmdid_index(cid);
 
     if (cid!=-1) {
-        //cmdb_printf("cmds[%d]=%d\r\n",ndx, cid);
+        //printf("cmds[%d]=%d\r\n",ndx, cid);
 
         /*------------------------------------------------
         Process the command and it's arguments that are
@@ -396,19 +574,20 @@ void  Cmdb::cmdb_cmd_dispatcher(char *cmd) {
         ------------------------------------------------*/
 
         if (cid==CID_LAST) {
-            cmdb_print("Unknown command, type 'Help' for a list of available commands.\r\n");
+            print("Unknown command, type 'Help' for a list of available commands.\r\n");
         } else {
-            //cmdb_printf("cmds[%d]=%d [%s]\r\n",ndx, cid, _cmds[ndx].cmdstr);
+            //printf("cmds[%d]=%d [%s]\r\n",ndx, cid, _cmds[ndx].cmdstr);
 
             //Test for more commandline than allowed too.
             //i.e. run 1 is wrong.
 
-            if (argcnt==0 && argfnd==0 && error==0 && ndx!=-1 && _cmds[ndx].subs==SUBSYSTEM) {
+            if (argcnt==0 && argfnd==0 && error==0 && ndx!=-1 && cmds[ndx].subs==SUBSYSTEM) {
                 //Handle all SubSystems.
                 subsystem=cid;
             } else if ( ((cid==CID_HELP) || (argcnt==argfnd)) && error==0 ) {
                 switch (cid) {
 
+#ifdef ENABLEMACROS
                         /////// GLOBAL MACRO COMMANDS ///////
 
                         //Define Macro from commandline
@@ -424,17 +603,18 @@ void  Cmdb::cmdb_cmd_dispatcher(char *cmd) {
 
                         //List Macro's
                     case CID_MACROS:
-                        cmdb_print("[Macro]\r\n");
+                        print("[Macro]\r\n");
                         if (macro_buf[0]) {
-                            cmdb_printf("Value=%s\r\n",macro_buf);
+                            printf("Value=%s\r\n",macro_buf);
                         } else {
-                            cmdb_printf(";No Macro Defined\r\n");
+                            printf(";No Macro Defined\r\n");
                         }
                         break;
 
-                        /////// GLOBAL STATEMACHINE COMMANDS ///////
+#endif //ENABLEMACROS
 
 #ifdef STATEMACHINE
+                        /////// GLOBAL STATEMACHINE COMMANDS ///////
 
                         //Start State Machine
                     case CID_STATE:
@@ -457,12 +637,12 @@ void  Cmdb::cmdb_cmd_dispatcher(char *cmd) {
 
                         //Warm Boot
                     case CID_BOOT:
-                        //reset();
+                        mbed_reset();
                         break;
 
                         //Sends an ANSI escape code to clear the screen.
                     case CID_CLS:
-                        cmdb_print(cls);
+                        print(cls);
                         break;
 
                         //Returns to CMD> prompt where most commands are disabled.
@@ -472,15 +652,10 @@ void  Cmdb::cmdb_cmd_dispatcher(char *cmd) {
 
                         //Help
                     case CID_HELP: {
-
-//TODO Handle Subsystem
-
-//TODO Call command processor callback and if it returns false we supply help.
-
-                        cmdb_print("\r\n");
+                        print("\r\n");
 
                         if (argfnd>0) {
-                            cid = cmdb_cmdid_search(STRINGPARM(0));
+                            cid = cmdid_search(STRINGPARM(0));
                         } else {
                             cid=CID_LAST;
                         }
@@ -488,243 +663,96 @@ void  Cmdb::cmdb_cmd_dispatcher(char *cmd) {
                         if (argfnd>0 && cid!=CID_LAST) {
 
                             //Help with a valid command as first parameter
-                            ndx = cmdb_cmdid_index(cid);
+                            ndx = cmdid_index(cid);
 
-                            switch (_cmds[ndx].subs) {
-                                case SUBSYSTEM: //Dump whole subsystem
-                                    cmdb_printf("%s subsystem commands:\r\n\r\n",_cmds[ndx].cmdstr);
+                            switch (cmds[ndx].subs) {
+                                case SUBSYSTEM: { //Dump whole subsystem
+                                    printf("%s subsystem commands:\r\n\r\n",cmds[ndx].cmdstr);
 
-                                    for (int i=0;i<CMD_TBL_LEN-1;i++) {
-                                        if (_cmds[i].subs==ndx) {
-                                            cmdb_cmdhelp("",i,",\r\n");
+                                    //Count SubSystem Commands.
+                                    int subcmds =0;
+                                    for (int i=0;i<cmds.size();i++) {
+                                        if (cmds[i].subs==cid) {
+                                            subcmds++;
                                         }
                                     }
 
-                                    break;
+                                    //Print SubSystem Commands.
+                                    for (int i=0;i<cmds.size()-1;i++) {
+                                        if (cmds[i].subs==cid) {
+                                            subcmds--;
+                                            if (subcmds!=0) {
+                                                cmdhelp("",i,",\r\n");
+                                            } else {
+                                                cmdhelp("",i,".\r\n");
+                                            }
+                                        }
+                                    }
+                                }
+                                break;
 
                                 case GLOBALCMD: //Dump command only
-                                    //cmdb_print("Global command:\r\n\r\n",cmd_tbl[cmd_tbl[ndx].subs].cmdstr);
-                                    cmdb_cmdhelp("Syntax: ",ndx,".\r\n");
+                                    //print("Global command:\r\n\r\n",cmd_tbl[cmd_tbl[ndx].subs].cmdstr);
+                                    cmdhelp("Syntax: ",ndx,".\r\n");
                                     break;
 
                                 default:        //Dump one subsystem command
-                                    cmdb_printf("%s subsystem command:\r\n\r\n",_cmds[_cmds[ndx].subs].cmdstr);
-                                    cmdb_cmdhelp("Syntax: ",ndx,".\r\n");
+                                    printf("%s subsystem command:\r\n\r\n",cmds[cmds[ndx].subs].cmdstr);
+                                    cmdhelp("Syntax: ",ndx,".\r\n");
                                     break;
                             }
                         } else {
                             if (argfnd>0) {
                                 //Help with invalid command as first parameter
-                                cmdb_print("Unknown command, type 'Help' for a list of available commands.\r\n");
+                                print("Unknown command, type 'Help' for a list of available commands.\r\n");
                             } else {
                                 //Help
 
                                 //Dump Active Subsystem, Global & Other (dormant) Subsystems
-                                for (int i=0;i<CMD_TBL_LEN-1;i++) {
-                                    if ((_cmds[i].subs<0) || (_cmds[i].subs==subsystem)) {
-                                        cmdb_cmdhelp("",i,",\r\n");
+                                //-1 because we want comma's and for the last a .
+                                for (int i=0;i<cmds.size()-1;i++) {
+                                    if ((cmds[i].subs<0) || (cmds[i].subs==subsystem)) {
+                                        cmdhelp("",i,",\r\n");
                                     }
                                 }
-                                cmdb_cmdhelp("",CMD_TBL_LEN-1,".\r\n");
+                                cmdhelp("",cmds.size()-1,".\r\n");
                             }
                         }
-                        cmdb_print("\r\n");
+                        print("\r\n");
                         break;
                     } //CID_HELP
-                    
+
                     default : {
-                         (*cmdb_callback)(*this, cid);
+                        // Do a Call to the Application's Command Dispatcher.
+                        (*callback)(*this, cid);
                     }
                 }
             } else {
-                cmdb_cmdhelp("Syntax: ",ndx,".\r\n");
+                cmdhelp("Syntax: ",ndx,".\r\n");
             }
 
-        }// else {
-        //    cmdb_print("1Unknown command, type 'Help' for a list of available commands.\r\n");
-        //}
-    }// else {
-    //    cmdb_print("2Unknown command, type 'Help' for a list of available commands.\r\n");
-    //}
-}
+        }
 
-//Private Utilities #2
-
-void  Cmdb::cmdb_init(const char full) {
-    if (full) {
-        echo = true;
-        bold = true;
-
-        subsystem = -1;
-
-        lstbuf [cmdndx] = '\0';
-
-        cmdb_macro_reset();
-
-        cmdb_prompt();
-    }
-
-    cmdndx = 0;
-    cmdbuf [cmdndx] = '\0';
-
-    escndx = 0;
-    escbuf [escndx] = '\0';
-}
-
-void  Cmdb::cmdb_prompt(void) {
-    if (subsystem!=-1) {
-        int ndx = cmdb_cmdid_index(subsystem);
-        cmdb_printf("%s>",_cmds[ndx].cmdstr);
     } else {
-        cmdb_print(prompt);
+        //cid==-1
     }
 }
 
-bool  Cmdb::cmdb_scan(const char c) {
-    int i;
+void  Cmdb::prompt(void) {
+#ifdef SUBSYSTEMPROMPTS
+    if (subsystem!=-1) {
+        int ndx = cmdid_index(subsystem);
 
-    //See http://www.interfacebus.com/ASCII_Table.html
+        printf("%s>",_cmds[ndx].cmdstr);
 
-    if (c == '\r') {                                // cr?
-        cmdb_print(crlf);                           // Output it and ...
-        if (cmdndx) {
-            strncpy(lstbuf,cmdbuf,cmdndx);
-            lstbuf[cmdndx]='\0';
-            
-            cmdb_cmd_dispatcher(cmdbuf);
-        }
-        cmdb_init(false);
-        cmdb_prompt();
-
-        return true;
+        return;
     }
+#endif //SUBSYSTEMPROMPTS
 
-    //TODO BACKSPACE NOT CORRECT FOR TELNET!
-
-    if (c == '\b') {                                // Backspace
-        if (cmdndx != 0) {
-            cmdb_print(bs);
-            cmdbuf [--cmdndx] = '\0';
-        } else {
-            cmdb_printch(bell);                     // Output Error
-        }
-        return false;
-    }
-
-    if (c == '\177') {                              // Delete
-        while (cmdndx>0) {
-            cmdb_print(bs);
-            cmdbuf [--cmdndx] = '\0';
-        }
-        return false;
-    }
-
-    //Reset Escape Buffer.
-    if (c == '\033') {
-        if (escndx!=0) {
-            //_putchar(bell);                       // Output Error
-            //printf("%s\r\n",escbuf);
-        }
-        escndx = 0;
-        escbuf [escndx] = '\0';                     // NULL-Terminate buffer
-    }
-
-    //Extract Escape Sequence.
-    if (c == '\033' || escndx ) {                   // Wait for escape
-        escbuf [escndx++] = (unsigned char) c;      // Add to the buffer
-        escbuf [escndx]   = '\0';                   // NULL-Terminate buffer
-        if (isalpha(c)) {
-            switch (cmdb_escid_search(escbuf)) {
-                case EID_CURSOR_LEFT    : {
-                    if (cmdndx != 0) {   // Backspace?
-                        cmdb_print(bs);
-                        cmdbuf [--cmdndx] = '\0';
-                    } else {
-                        cmdb_printch(bell);             // Output char
-                    }
-                    break;
-                }
-                case EID_CURSOR_UP    : {
-                    for (i=0;i<cmdndx;i++) {
-                        cmdb_print(bs);
-                    }
-                    cmdndx=strlen(lstbuf);
-                    strncpy(cmdbuf,lstbuf,cmdndx);
-                    cmdbuf[cmdndx]='\0';
-                    cmdb_printf("%s",cmdbuf);
-                    break;
-                }
-                case EID_CURSOR_RIGHT:
-                    break;
-                case EID_CURSOR_DOWN    :
-                    break;
-                case EID_LAST            :
-                    break;
-                default                     :
-                    cmdb_printch(bell);
-                    break;
-            }
-            escndx=0;
-            escbuf [escndx]   = '\0';               // NULL-Terminate buffer
-        }
-        return false;
-    }
-
-    if (c=='\n') {                                  // LF
-        return false;                               // Dump it
-    }
-
-    if (!isprint (c)) {                             // Printable character?
-        cmdb_printch(bell);
-        return false;
-    }
-
-    if (cmdndx >= MAX_CMD_LEN) {                    // Past buffer length?
-        cmdb_printch(bell);
-        return false;
-    }
-
-    cmdbuf [cmdndx++] = (unsigned char) c;          // Add to the buffer
-    cmdbuf [cmdndx]   = '\0';                       // NULL-Terminate buffer
-
-    if (echo) {
-        cmdb_printch(c);                            // Output char
-    }
-
-    return false;
+    printf(PROMPT);
 }
 
-//Private Utilities #3
-
-int   Cmdb::cmdb_printf(const char *format, ...) {
-    int cnt;
-
-    va_list args;
-    char buf[1024];
-
-    memset(buf,'\0',sizeof(buf));
-
-    va_start(args, format);
-    cnt = vsnprintf(buf, sizeof(buf), format, args);
-    if (cnt==-1) {
-        //Error
-    }
-    va_end(args);
-
-    return cmdb_print(buf);
-}
-
-//Link to outside world.
-int   Cmdb::cmdb_print(const char *msg) {
-    return _serial.printf(msg);
-}
-
-//Link to outside world.
-char  Cmdb::cmdb_printch(const char ch) {
-    return _serial.putc(ch);
-}
-
-void  Cmdb::cmdb_cmdhelp(char *pre, int ndx, char *post) {
+void  Cmdb::cmdhelp(char *pre, int ndx, char *post) {
     int  j;
     int  k;
     int  lastmod;
@@ -732,7 +760,7 @@ void  Cmdb::cmdb_cmdhelp(char *pre, int ndx, char *post) {
     k=0;
     lastmod=0;
 
-    switch (_cmds[ndx].subs) {
+    switch (cmds[ndx].subs) {
         case SUBSYSTEM :
             break;
         case GLOBALCMD :
@@ -741,37 +769,37 @@ void  Cmdb::cmdb_cmdhelp(char *pre, int ndx, char *post) {
             return;
         default        :
             if (strlen(pre)==0 && bold) {
-                cmdb_print(boldon);
+                print(boldon);
             }
             break;
     }
 
-    cmdb_print(pre);
+    print(pre);
     k+=strlen(pre);
 
     if (k==0) {
-        cmdb_printf("%12s",_cmds[ndx].cmdstr);
+        printf("%12s",cmds[ndx].cmdstr);
         k+=12;
     } else {
         if (strlen(pre)>0 && bold) {
-            cmdb_print(boldon);
+            print(boldon);
         }
 
-        cmdb_printf("%s",_cmds[ndx].cmdstr);
-        k+=strlen(_cmds[ndx].cmdstr);
+        printf("%s",cmds[ndx].cmdstr);
+        k+=strlen(cmds[ndx].cmdstr);
 
         if (strlen(pre)>0 && bold) {
-            cmdb_print(boldoff);
+            print(boldoff);
         }
     }
 
-    if (strlen(_cmds[ndx].parms)) {
-        cmdb_printch(sp);
+    if (strlen(cmds[ndx].parms)) {
+        printch(sp);
         k++;
     }
 
-    for (j=0;j<strlen(_cmds[ndx].parms);j++) {
-        switch (_cmds[ndx].parms[j]) {
+    for (j=0;j<strlen(cmds[ndx].parms);j++) {
+        switch (cmds[ndx].parms[j]) {
             case '%' :
                 lastmod=0;
                 break;
@@ -791,15 +819,15 @@ void  Cmdb::cmdb_cmdhelp(char *pre, int ndx, char *post) {
                 switch (lastmod) {
                     case  0 :
                     case 16 :
-                        cmdb_print("int");
+                        print("int");
                         k+=3;
                         break;
                     case  8 :
-                        cmdb_print("shortint");
+                        print("shortint");
                         k+=8;
                         break;
                     case 32:
-                        cmdb_print("longint");
+                        print("longint");
                         k+=7;
                         break;
                 }
@@ -812,26 +840,26 @@ void  Cmdb::cmdb_cmdhelp(char *pre, int ndx, char *post) {
                 switch (lastmod) {
                     case  0 :
                     case 16 :
-                        cmdb_print("word");
+                        print("word");
                         k+=4;
                         break;
                     case  8 :
-                        cmdb_print("byte");
+                        print("byte");
                         k+=4;
                         break;
                     case 32 :
-                        cmdb_print("dword");
+                        print("dword");
                         k+=5;
                         break;
                 }
 
-                switch (_cmds[ndx].parms[j]) {
+                switch (cmds[ndx].parms[j]) {
                     case 'o' :
-                        cmdb_print("[o]");
+                        print("[o]");
                         k+=3;
                         break;
                     case 'x' :
-                        cmdb_print("[h]");
+                        print("[h]");
                         k+=3;
                         break;
                 }
@@ -842,53 +870,53 @@ void  Cmdb::cmdb_cmdhelp(char *pre, int ndx, char *post) {
             case 'e' :
             case 'f' :
             case 'g' :
-                cmdb_print("float");
+                print("float");
                 k+=5;
                 break;
 
             case 'c' :
-                cmdb_print("char");
+                print("char");
                 k+=4;
                 break;
 
             case 's' :
-                cmdb_print("string");
+                print("string");
                 k+=6;
                 break;
 
             case ' ' :
-                cmdb_printch(sp);
+                printch(sp);
                 k++;
                 break;
         }
     }
 
-    for (j=k;j<40;j++) cmdb_printch(sp);
+    for (j=k;j<40;j++) printch(sp);
 
-    switch (_cmds[ndx].subs) {
+    switch (cmds[ndx].subs) {
         case SUBSYSTEM :
             if (ndx==subsystem) {
-                cmdb_printf("- %s (active subsystem)%s",_cmds[ndx].cmddescr,post);
+                printf("- %s (active subsystem)%s",cmds[ndx].cmddescr,post);
             } else {
-                cmdb_printf("- %s (dormant subsystem)%s",_cmds[ndx].cmddescr,post);
+                printf("- %s (dormant subsystem)%s",cmds[ndx].cmddescr,post);
             }
             break;
         case HIDDENSUB :
             break;
         case GLOBALCMD :
-            cmdb_printf("- %s (global command)%s",_cmds[ndx].cmddescr,post);
+            printf("- %s (global command)%s",cmds[ndx].cmddescr,post);
             break;
         default        :
-            cmdb_printf("- %s%s",_cmds[ndx].cmddescr,post);
+            printf("- %s%s",cmds[ndx].cmddescr,post);
             if (strlen(pre)==0 && bold) {
-                cmdb_print(boldoff);
+                print(boldoff);
             }
             break;
     }
 
-    if (strlen(pre)>0 && strlen(_cmds[ndx].parmdescr)) {
-        cmdb_printf("Params: %s",_cmds[ndx].parmdescr);
-        cmdb_print("\r\n");
+    if (strlen(pre)>0 && strlen(cmds[ndx].parmdescr)) {
+        printf("Params: %s",cmds[ndx].parmdescr);
+        print("\r\n");
     }
 }
 
@@ -917,3 +945,5 @@ int  Cmdb::stricmp (char *s1, char *s2) {
 
     return (0);
 }
+
+//------------------------------------------------------------------------------
