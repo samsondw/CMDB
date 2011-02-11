@@ -13,16 +13,18 @@ _____________________________________________________________________________
             -Fixed a number of old Index/Id conflicts.
             -Got a working version. Much work to be done though.
             -Handle CID_HELP internally (like all system commands (IDLE/MACRO etc).
-            -Defined CID_LAST as Vector Size or Last Command Id fails.
+            -Handle subsystems internally.
             -Removed CMD_TBL_LEN.
             -CID_LAST is now defined as CID_HELP+1.
-            -Added Documentation.
+   11022011 -Added Documentation.
             -Added code to take number limits from the C++ Runtime instead of hard defined values.
             -Renamed id to cid in cmd.
             -Added MAX_LONG and MIN_LONG (long==int on mbed).
             -Removed cmdb_ prefix from members.
             -Tested Macro Support and added it to the Demo.
             -Added CID_COMMANDS.
+            -Fixed a small bug in parse.   
+            -v0.76      
    -------- --------------------------------------------------------------
    TODO's
    10022011 -Tweak and Review Documentation.
@@ -556,7 +558,7 @@ int Cmdb::parse(char *cmd) {
                 }
             }
         } else {
-            cid=CID_LAST;
+            //cid=CID_LAST;
         }
     }
 
@@ -582,6 +584,8 @@ void  Cmdb::cmd_dispatcher(char *cmd) {
         parms contains the parsed argument values and their
         types.
         ------------------------------------------------*/
+
+        //printf("cmds[%d]=%d\r\n",ndx, cid);
 
         if (cid==CID_LAST) {
             print("Unknown command, type 'Help' for a list of available commands.\r\n");
