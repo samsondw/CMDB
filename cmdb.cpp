@@ -18,9 +18,10 @@ _____________________________________________________________________________
             -CID_LAST is now defined as CID_HELP+1.
             -Added Documentation.
             -Added code to take number limits from the C++ Runtime instead of hard defined values.
-            -Renamed id to cid in cmd. 
+            -Renamed id to cid in cmd.
             -Added MAX_LONG and MIN_LONG (long==int on mbed).
             -Removed cmdb_ prefix from members.
+            -Tested Macro Support and added it to the Demo.
    -------- --------------------------------------------------------------
    TODO's
    10022011 -Tweak and Review Documentation.
@@ -46,7 +47,7 @@ Cmdb::Cmdb(const Serial& serial, const std::vector<cmd>& cmds, void (*callback)(
         serial(serial), cmds(cmds) {
     echo = true;
     bold = true;
-    
+
     subsystem = -1;
 
     callback = callback;
@@ -69,7 +70,15 @@ char Cmdb::macro_next() {
         macro_reset();
     }
 
-    return ch;
+    //Translate Special Characters Back
+    switch (ch) {
+        case '|':
+            return cr;
+        case '_':
+            return sp;
+        default:
+            return ch;
+    }
 }
 
 char  Cmdb::macro_peek() {
@@ -593,7 +602,12 @@ void  Cmdb::cmd_dispatcher(char *cmd) {
                         //Define Macro from commandline
                     case CID_MACRO:
                         macro_ptr=-1;
+                       
+                        zeromemory((char*)macro_buf, sizeof(macro_buf));
                         strncpy(macro_buf, STRINGPARM(0), sizeof(macro_buf) - 1);
+                        
+                        //DEBUG
+                        printf("Macro=%s\r\n",macro_buf);
                         break;
 
                         //Run Macro
@@ -604,7 +618,7 @@ void  Cmdb::cmd_dispatcher(char *cmd) {
                         //List Macro's
                     case CID_MACROS:
                         print("[Macro]\r\n");
-                        if (macro_buf[0]) {
+                        if (macro_buf[0]!='\0') {
                             printf("Value=%s\r\n",macro_buf);
                         } else {
                             printf(";No Macro Defined\r\n");

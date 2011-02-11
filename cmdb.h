@@ -66,7 +66,7 @@
  *
  * When defined, prompts will reflect the SubSystem.
  */
-#undef SUBSYSTEMPROMPTS
+#define SUBSYSTEMPROMPTS
 
 //------------------------------------------------------------------------------
 
@@ -335,7 +335,7 @@ const cmd HELP("Help",GLOBALCMD,CID_HELP,"%s","Help");
 
 /** Escape code definition struct.
  */
-struct esc_st {
+struct esc {
     char     *escstr;
     int     id;
 };
@@ -352,7 +352,7 @@ enum {
 
 /** The Escape Codes Table.
  */
-const struct esc_st esc_tbl [ESC_TBL_LEN] = {
+const struct esc esc_tbl [ESC_TBL_LEN] = {
     { "\033[A",    EID_CURSOR_UP    },
     { "\033[B",    EID_CURSOR_DOWN  },
     { "\033[C",    EID_CURSOR_RIGHT },
@@ -363,7 +363,7 @@ const struct esc_st esc_tbl [ESC_TBL_LEN] = {
 
 /** The Command Interpreter Version.
  */
-#define CMDB_VERSION     0.7
+#define CMDB_VERSION     0.71
 
 //------------------------------------------------------------------------------
 
@@ -379,11 +379,15 @@ const struct esc_st esc_tbl [ESC_TBL_LEN] = {
  *    and finally a command dispatcher function.<br/>
  * <br/>
  * 3) Feed the interpreter with characters received from your serial port.<br/>
- *    Note Cmdb self does not retrieve input it must be handed to it<br/>
+ *    Note: Cmdb self does not retrieve input it must be handed to it.<br/>
+ *    It implements basic members for checking/reading the serial port.<br/>
  * <br/>
- * 4) Handle commands added by the application by the Id and parameters passed.<br/>
- *
- * @see main.cpp for a sample.
+ * 4) Handle commands added by the application by the Cid and parameters passed.<br/>
+ * <br/>
+ * Note: Predefined commands and all subsystems transitions are handled by the internal dispatcher.<br/>
+ * So the passed dispatcher only has to handle user/application defined commands'.<br/>
+ * <br/>
+ * @see main.cpp for a demo.
  */
 class Cmdb {
 public:

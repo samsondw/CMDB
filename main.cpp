@@ -18,11 +18,11 @@ Serial serial(USBTX, USBRX); //tx, rx
  */
 void my_dispatcher(Cmdb& cmdb, int cid) {
     cmdb.printf("my_dispatcher: cid=%d\r\n", cid);
-    
+
     switch (cid) {
-    case CID_INT : 
-        cmdb.printf("my_dispatcher: parm 0=%d\r\n",cmdb.INTPARM(0));
-        break;
+        case CID_INT :
+            cmdb.printf("my_dispatcher: parm 0=%d\r\n",cmdb.INTPARM(0));
+            break;
     }
 }
 
@@ -33,7 +33,7 @@ int main() {
     // Set the Baudrate.
     serial.baud(115200);
 
-    // Test the serial connection by 
+    // Test the serial connection by
     serial.printf("\r\n\r\nCmdb Command Interpreter Demo Version %0.2f.\r\n\r\n", Cmdb::version());
 
     //Create a Command Table Vector.
@@ -45,10 +45,14 @@ int main() {
 
     //Add some predefined...
     cmds.push_back(BOOT); //Handled by Cmdb internally.
-    
+
     cmds.push_back(ECHO); //Handled by Cmdb internally.
     cmds.push_back(BOLD); //Handled by Cmdb internally.
     cmds.push_back(CLS);  //Handled by Cmdb internally.
+
+    cmds.push_back(MACRO);  //Handled by Cmdb internally.
+    cmds.push_back(RUN);    //Handled by Cmdb internally.
+    cmds.push_back(MACROS); //Handled by Cmdb internally.
 
     //Add some predefined and mandatory...
     cmds.push_back(IDLE); //Handled by Cmdb internally.
@@ -58,12 +62,12 @@ int main() {
     Cmdb cmdb(serial, cmds, &my_dispatcher);
 
     while (1) {
-        //Check for input...    
+        //Check for input...
         if (cmdb.hasnext()==true) {
-            
+
             //Supply input to Command Interpreter
             if (cmdb.scan(cmdb.next())) {
-            
+
                 //Flash led when a command has been parsed and dispatched.
                 myled = 1;
                 wait(0.2);
@@ -75,5 +79,16 @@ int main() {
             }
         }
 
+        //For Macro Support we basically do the same but take characters from the macro buffer.
+        //Example Macro: Test|Int_42|Idle
+        while (cmdb.macro_hasnext()) {
+            //Get and process next character.
+            cmdb.scan(cmdb.macro_next());
+            
+            //After the last character we need to add a cr to force execution.    
+            if (!cmdb.macro_peek()) {
+                cmdb.scan(cr);
+            }
+        }
     }
 }
