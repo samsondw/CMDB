@@ -384,26 +384,26 @@ const struct esc esc_tbl [ESC_TBL_LEN] = {
 
 //------------------------------------------------------------------------------
 
-/** Command Interpreter class.<br/>
- * <br/>
- * Steps to take:<br/>
- * <br/>
- * 1) Create a std::vector<cmd> and fill it with at least<br/>
- *    the mandatory commands IDLE and HELP.<br/>
- * <br/>
- * 2) Create an Cmdb class instance and pass it the vector,<br/>
- *    a Serial port object like Serial serial(USBTX, USBRX); <br/>
- *    and finally a command dispatcher function.<br/>
- * <br/>
- * 3) Feed the interpreter with characters received from your serial port.<br/>
- *    Note: Cmdb self does not retrieve input it must be handed to it.<br/>
- *    It implements basic members for checking/reading the serial port.<br/>
- * <br/>
- * 4) Handle commands added by the application by the Cid and parameters passed.<br/>
- * <br/>
- * Note: Predefined commands and all subsystems transitions are handled by the internal dispatcher.<br/>
- * So the passed dispatcher only has to handle user/application defined commands'.<br/>
- * <br/>
+/** Command Interpreter class.
+ * 
+ * Steps to take:
+ * 
+ * 1) Create a std::vector<cmd> and fill it with at least
+ *    the mandatory commands IDLE and HELP.
+ * 
+ * 2) Create an Cmdb class instance and pass it the vector,
+ *    a Serial port object like Serial serial(USBTX, USBRX); 
+ *    and finally a command dispatcher function.
+ * 
+ * 3) Feed the interpreter with characters received from your serial port.
+ *    Note: Cmdb self does not retrieve input it must be handed to it.
+ *    It implements basic members for checking/reading the serial port.
+ * 
+ * 4) Handle commands added by the application by the Cid and parameters passed.
+ * 
+ * Note: Predefined commands and all subsystems transitions are handled by the internal dispatcher.
+ * So the passed dispatcher only has to handle user/application defined commands'.
+ * 
  * @see main.cpp for a demo.
  */
 class Cmdb {
