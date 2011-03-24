@@ -150,6 +150,8 @@ public:
 
         parmdescr = (char*)malloc(strlen(_parmdescr)+1);
         strcpy(parmdescr,_parmdescr);
+        
+        //printf("%d:%d\r\n", subs, cid);
     }
 };
 
@@ -380,7 +382,7 @@ const struct esc esc_tbl [ESC_TBL_LEN] = {
 
 /** The Command Interpreter Version.
  */
-#define CMDB_VERSION     0.76
+#define CMDB_VERSION     0.77
 
 //------------------------------------------------------------------------------
 

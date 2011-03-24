@@ -23,8 +23,9 @@ _____________________________________________________________________________
             -Removed cmdb_ prefix from members.
             -Tested Macro Support and added it to the Demo.
             -Added CID_COMMANDS.
-            -Fixed a small bug in parse.   
-            -v0.76      
+            -Fixed a small bug in parse.
+            -v0.76
+   24032011 -Fixed some left-over bugs caused by index/id mixup.
    -------- --------------------------------------------------------------
    TODO's
    10022011 -Tweak and Review Documentation.
@@ -716,12 +717,17 @@ void  Cmdb::cmd_dispatcher(char *cmd) {
                                 case GLOBALCMD: //Dump command only
                                     //print("Global command:\r\n\r\n",cmd_tbl[cmd_tbl[ndx].subs].cmdstr);
                                     cmd_help("Syntax: ",ndx,".\r\n");
+
                                     break;
 
-                                default:        //Dump one subsystem command
-                                    printf("%s subsystem command:\r\n\r\n",cmds[cmds[ndx].subs].cmdstr);
+                                default: {      //Dump one subsystem command
+                                    int sndx = cmdid_index(cmds[ndx].subs);
+
+                                    printf("%s subsystem command:\r\n\r\n",cmds[sndx].cmdstr);
+
                                     cmd_help("Syntax: ",ndx,".\r\n");
-                                    break;
+                                }
+                                break;
                             }
                         } else {
                             if (argfnd>0) {
@@ -800,7 +806,9 @@ void Cmdb::cmd_dump() {
                 print("subsystem=Global\r\n");
                 break;
             default        :
-                if (cmds[cmds[ndx].subs].subs==HIDDENSUB) {
+                int sndx = cmdid_index(cmds[ndx].subs);
+
+                if (cmds[sndx].subs==HIDDENSUB) {
 #ifdef SHOWHIDDEN
                     printf("[command%2.2d]\r\n",ndx+1);
                     print("type=HiddenCommand\r\n");
@@ -808,10 +816,10 @@ void Cmdb::cmd_dump() {
 #endif
                     continue;
                 }
+
                 printf("[command%2.2d]\r\n",ndx+1);
                 print("type=Command\r\n");
-                printf("subsystem=%s\r\n",cmds[cmds[ndx].subs].cmdstr);
-                break;
+                printf("subsystem=%s\r\n",cmds[sndx].cmdstr);
         }
 
         if (cmds[ndx].subs==HIDDENSUB) {
