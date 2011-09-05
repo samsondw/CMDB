@@ -26,6 +26,10 @@ _____________________________________________________________________________
             -Fixed a small bug in parse.
             -v0.76
    24032011 -Fixed some left-over bugs caused by index/id mixup.
+   09052011 -Added present(), replace() and indexof() methods.
+             replace() can be used to replace the complete command vector
+             by a changed done. Inserting directly into cmdb's copy fails
+             somehow.
    -------- --------------------------------------------------------------
    TODO's
    10022011 -Tweak and Review Documentation.
@@ -47,14 +51,14 @@ _____________________________________________________________________________
 
 //------------------------------------------------------------------------------
 
-Cmdb::Cmdb(const Serial& serial, const std::vector<cmd>& cmds, void (*callback)(Cmdb&,int)) :
-        serial(serial), cmds(cmds) {
+Cmdb::Cmdb(const Serial& _serial, std::vector<cmd>& _cmds, void (*_callback)(Cmdb&,int)) :
+        serial(_serial), cmds(_cmds) {
     echo = true;
     bold = true;
 
     subsystem = -1;
 
-    user_callback = callback;
+    user_callback = _callback;
 
     init(true);
 }
@@ -171,7 +175,7 @@ bool  Cmdb::scan(const char c) {
                     break;
                 }
                 case EID_CURSOR_UP    : {
-                    for (i=0;i<cmdndx;i++) {
+                    for (i=0; i<cmdndx; i++) {
                         print(bs);
                     }
                     cmdndx=strlen(lstbuf);
@@ -345,7 +349,7 @@ int Cmdb::parse(char *cmd) {
     zeromemory(argstr_buf,sizeof(argstr_buf));
 
     //Make it worse in Lint
-    for (int i=0;i<MAX_ARGS;i++) {
+    for (int i=0; i<MAX_ARGS; i++) {
         parms[i].type=PARM_UNUSED;
         zeromemory((char*)&(parms[i].val),sizeof(parms[i].val));
     }
@@ -429,7 +433,7 @@ int Cmdb::parse(char *cmd) {
 
             error = 0;
 
-            for (int i=0;i<argcnt;i++) {
+            for (int i=0; i<argcnt; i++) {
                 //printf("prm_%2.2d=%s\r\n",i, prms[i]);
 
                 switch (strlen(prms[i])) {
@@ -694,14 +698,14 @@ void  Cmdb::cmd_dispatcher(char *cmd) {
 
                                     //Count SubSystem Commands.
                                     int subcmds =0;
-                                    for (int i=0;i<cmds.size();i++) {
+                                    for (int i=0; i<cmds.size(); i++) {
                                         if (cmds[i].subs==cid) {
                                             subcmds++;
                                         }
                                     }
 
                                     //Print SubSystem Commands.
-                                    for (int i=0;i<cmds.size()-1;i++) {
+                                    for (int i=0; i<cmds.size()-1; i++) {
                                         if (cmds[i].subs==cid) {
                                             subcmds--;
                                             if (subcmds!=0) {
@@ -738,7 +742,7 @@ void  Cmdb::cmd_dispatcher(char *cmd) {
 
                                 //Dump Active Subsystem, Global & Other (dormant) Subsystems
                                 //-1 because we want comma's and for the last a .
-                                for (int i=0;i<cmds.size()-1;i++) {
+                                for (int i=0; i<cmds.size()-1; i++) {
                                     if ((cmds[i].subs<0) || (cmds[i].subs==subsystem)) {
                                         cmd_help("",i,",\r\n");
                                     }
@@ -779,7 +783,7 @@ void Cmdb::cmd_dump() {
     k = 0;
     lastmod = 0;
 
-    for (ndx=0;ndx<cmds.size();ndx++) {
+    for (ndx=0; ndx<cmds.size(); ndx++) {
 
 #ifndef SHOWHIDDEN
         if (cmds[ndx].subs==HIDDENSUB) {
@@ -829,7 +833,7 @@ void Cmdb::cmd_dump() {
         printf("command=%s\r\n",cmds[ndx].cmdstr);
         printf("helpmsg=%s\r\n",cmds[ndx].cmddescr);
         print("parameters=");
-        for (j=0;j<strlen(cmds[ndx].parms);j++) {
+        for (j=0; j<strlen(cmds[ndx].parms); j++) {
             switch (cmds[ndx].parms[j]) {
                 case '%' :
                     lastmod=0;
@@ -986,7 +990,7 @@ void  Cmdb::cmd_help(char *pre, int ndx, char *post) {
         k++;
     }
 
-    for (j=0;j<strlen(cmds[ndx].parms);j++) {
+    for (j=0; j<strlen(cmds[ndx].parms); j++) {
         switch (cmds[ndx].parms[j]) {
             case '%' :
                 lastmod=0;
@@ -1079,7 +1083,7 @@ void  Cmdb::cmd_help(char *pre, int ndx, char *post) {
         }
     }
 
-    for (j=k;j<40;j++) printch(sp);
+    for (j=k; j<40; j++) printch(sp);
 
     switch (cmds[ndx].subs) {
         case SUBSYSTEM :
@@ -1123,7 +1127,7 @@ int  Cmdb::stricmp (char *s1, char *s2) {
     len1=strlen(s1);
     len2=strlen(s2);
 
-    for (i = 0; (i<len1) && (i<len2);i++) {
+    for (i = 0; (i<len1) && (i<len2); i++) {
         if ( toupper (s1[i])<toupper(s2[i]) ) return (-1);
         if ( toupper (s1[i])>toupper(s2[i]) ) return (+1);
     }

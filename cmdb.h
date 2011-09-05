@@ -150,7 +150,7 @@ public:
 
         parmdescr = (char*)malloc(strlen(_parmdescr)+1);
         strcpy(parmdescr,_parmdescr);
-        
+
         //printf("%d:%d\r\n", subs, cid);
     }
 };
@@ -382,30 +382,30 @@ const struct esc esc_tbl [ESC_TBL_LEN] = {
 
 /** The Command Interpreter Version.
  */
-#define CMDB_VERSION     0.77
+#define CMDB_VERSION     0.78
 
 //------------------------------------------------------------------------------
 
 /** Command Interpreter class.
- * 
+ *
  * Steps to take:
- * 
+ *
  * 1) Create a std::vector<cmd> and fill it with at least
  *    the mandatory commands IDLE and HELP.
- * 
+ *
  * 2) Create an Cmdb class instance and pass it the vector,
- *    a Serial port object like Serial serial(USBTX, USBRX); 
+ *    a Serial port object like Serial serial(USBTX, USBRX);
  *    and finally a command dispatcher function.
- * 
+ *
  * 3) Feed the interpreter with characters received from your serial port.
  *    Note: Cmdb self does not retrieve input it must be handed to it.
  *    It implements basic members for checking/reading the serial port.
- * 
+ *
  * 4) Handle commands added by the application by the Cid and parameters passed.
- * 
+ *
  * Note: Predefined commands and all subsystems transitions are handled by the internal dispatcher.
  * So the passed dispatcher only has to handle user/application defined commands'.
- * 
+ *
  * @see main.cpp for a demo.
  */
 class Cmdb {
@@ -419,7 +419,7 @@ public:
      * @param serial a Serial port used for communication.
      * @param cmds a vector with the command table.
      */
-    Cmdb(const Serial& serial, const std::vector<cmd>& cmds, void (*callback)(Cmdb&,int) );
+    Cmdb(const Serial& _serial, std::vector<cmd>& _cmds, void (*_callback)(Cmdb&,int) );
 
     /** The version of the Command Interpreter.
      *
@@ -645,7 +645,62 @@ public:
         return parms[ndx].val.s;
     }
 
+    bool present(char *cmdstr) {
+        return cmdid_search(cmdstr)!=CID_LAST;
+    }
+
+    void replace(std::vector<cmd>& newcmds)  {
+        cmds.assign(newcmds.begin(), newcmds.end());
+    }
+
+
+    int indexof(int cid) {
+        return cmdid_index(cid);
+    }
+
+    //FAILS...
+    /*
+    void insert(int cid, cmd newcmd) {
+        //Add Command (update our original and then assign/replace cmdb's copy)...
+        vector<cmd>::iterator iter;
+
+        std::vector<cmd> newcmds = std::vector<cmd>(cmds);
+
+        iter = newcmds.begin();
+
+        newcmds.insert(iter+indexof(cid)+1,newcmd);
+
+        replace(newcmds);
+
+        printf("Index: %d\r\n", ndx);
+
+        print("check #1\r\n");
+        print("check #2\r\n");
+
+        vector<cmd>::iterator it;
+        it=newcmds.begin();
+
+        print("check #3\r\n");
+        ndx++;
+        newcmds.insert(it, newcmd);
+        print("check #4\r\n");
+
+        //cmds.push_back(c1);
+        cmds.assign(newcmds.begin(), newcmds.end());
+    }
+    */
+
 private:
+
+    /** Internal Serial Port Storage.
+    */
+    Serial serial;
+
+    /** Internal Command Table Vector Storage.
+     *
+     * @see http://www.cplusplus.com/reference/stl/vector/
+     */
+    std::vector<cmd> cmds;
 
     /** C callback function
      *
@@ -729,16 +784,6 @@ private:
      * @returns 0 if s1=s2, -1 if s1<s2 or +1 if s1>s2.
      */
     int stricmp (char *s1, char *s2);
-
-    /** Internal Serial Port Storage.
-    */
-    Serial serial;
-
-    /** Internal Command Table Vector Storage.
-     *
-     * @see http://www.cplusplus.com/reference/stl/vector/
-     */
-    std::vector<cmd> cmds;
 
     /** Internal Echo Flag Storage.
     */
