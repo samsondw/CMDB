@@ -3,7 +3,7 @@ _____________________________________________________________________________
 
    Project:     mBed Command Interpreter
    Filename:    cmdb.h
-   Version:     0.5.0
+   Version:     0.80
 _____________________________________________________________________________
    Date         Comment
    -------- --------------------------------------------------------------
@@ -30,6 +30,19 @@ _____________________________________________________________________________
              replace() can be used to replace the complete command vector
              by a changed done. Inserting directly into cmdb's copy fails
              somehow.
+   19092011 -Added PrintSection(), PrintValue() and PrintValuef() for 
+             easier Windows Ini File style output. As I use it to transfer 
+             data back to the PC (Easy parsing AND you can add/remove
+             debug information without breaking PC code).
+   20092011 -Breaking change, Made all cmd object static const like:
+   
+             static const cmd HELP = {"Help",GLOBALCMD,CID_HELP,"%s","Help"};
+
+             this saves just to much ram memory on the heap. 
+             Thanks to Igor Skochinsky.
+             
+            -Made some more const string static.     
+            -v0.80
    -------- --------------------------------------------------------------
    TODO's
    10022011 -Tweak and Review Documentation.
@@ -56,12 +69,19 @@ Cmdb::Cmdb(const Serial& _serial, std::vector<cmd>& _cmds, void (*_callback)(Cmd
     echo = true;
     bold = true;
 
+    NoComment = NULL;
+    DefComPos = 72;
+
     subsystem = -1;
 
     user_callback = _callback;
 
     init(true);
 }
+
+const char* Cmdb::NoComment;
+
+int Cmdb::DefComPos;
 
 //------------------------------------------------------------------------------
 // Public Stuff.
@@ -248,6 +268,70 @@ int   Cmdb::print(const char *msg) {
     return serial.printf(msg);
 }
 
+int   Cmdb::printsection(const char *section) {
+    return printf("[%s]\r\n", section);
+}
+
+int   Cmdb::printvaluef(const char *key, const char *format, ...) {
+    char buf[256];
+
+    va_list args;
+    va_start(args, format);
+
+    vsnprintf(buf, sizeof(buf), format, args);
+    
+    va_end(args);
+
+    return printf("%s=%s\r\n",key, buf);
+}
+
+int   Cmdb::printvaluef(const char *key, const int width, const char *comment, const char *format, ...) {
+    printf("%s=",key);
+
+    int  result = 0;
+    char buf[256];
+    int  cnt = 0;
+
+    va_list args;
+    va_start(args, format);
+
+    cnt = vsnprintf(buf, sizeof(buf), format, args);
+    cnt +=strlen(key)+1;
+    
+    va_end(args);
+
+    if (comment!=NULL) {
+        if (cnt<width) {
+            result = printf("%-*s ;%s\r\n", width, buf, comment);
+        } else {
+            result = printf("%s ;%s\r\n", buf, comment);
+        }
+    } else {
+        result = printf("%s\r\n",buf);
+    }
+
+    return result;
+}
+
+int   Cmdb::printvalue(const char *key, const char *value, const char *comment, const int width) {
+    if (comment) {
+        char buf[256];
+        int  cnt = 0;
+
+        memset(buf,'\0',sizeof(buf));
+
+        cnt = snprintf(buf, sizeof(buf), "%s=%s", key, value);
+
+        if (cnt<width) {
+            return printf("%-*s ;%s\r\n", width, buf, comment);
+        } else {
+            return printf("%s ;%s\r\n", buf, comment);
+        }
+    } else {
+        return printf("%s=%s\r\n", key, value);
+    }
+}
+
 char  Cmdb::printch(const char ch) {
     return serial.putc(ch);
 }
@@ -291,7 +375,7 @@ int  Cmdb::escid_search(char *escstr) {
 int  Cmdb::cmdid_search(char *cmdstr) {
     //Warning, we return the ID but somewhere assume it's equal to the array index!
     for (int i=0; i<cmds.size(); i++) {
-        if ((stricmp(cmds[i].cmdstr, cmdstr) == 0) && ((cmds[i].subs == subsystem) || (cmds[i].subs<0)))
+        if ((stricmp((char*)cmds[i].cmdstr, cmdstr) == 0) && ((cmds[i].subs == subsystem) || (cmds[i].subs<0)))
             return (cmds[i].cid);
     }
 

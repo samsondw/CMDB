@@ -114,96 +114,63 @@
  */
 struct cmd {
 public:
-    char *cmdstr;
+    const char *cmdstr;
     int  subs;
     int  cid;
-    char *parms;
-    char *cmddescr;
-    char *parmdescr;
-
-    /** Default Constructor.
-     */
-    cmd() {
-    }
-
-    /** Command Constructor.
-     *
-     * @parm _cmdstr the command, not case sensitive.
-     * @parm _subs subsystem id
-     * @parm _cid the command id that will be passed to the dispatcher.
-     * @parm _parms a scanf alike pattern.
-     * @parm _cmddescr command description.
-     * @parm _parmdescr parameter description.
-     */
-    cmd(char *_cmdstr, int _subs, int _cid, char *_parms, char *_cmddescr, char *_parmdescr = "") {
-        cmdstr = (char*)malloc(strlen(_cmdstr)+1);
-        strcpy(cmdstr,_cmdstr);
-
-        subs = _subs;
-        cid = _cid;
-
-        parms = (char*)malloc(strlen(_parms)+1);
-        strcpy(parms,_parms);
-
-        cmddescr = (char*)malloc(strlen(_cmddescr)+1);
-        strcpy(cmddescr,_cmddescr);
-
-        parmdescr = (char*)malloc(strlen(_parmdescr)+1);
-        strcpy(parmdescr,_parmdescr);
-
-        //printf("%d:%d\r\n", subs, cid);
-    }
+    const char *parms;
+    const char *cmddescr;
+    const char *parmdescr;
 };
 
 //------------------------------------------------------------------------------
 
 /** Cr.
  */
-const char cr           = '\r';
+static const char cr           = '\r';
 
 /** Lf.
  */
-const char lf           = '\n';
+static const char lf           = '\n';
 
 /** Bell.
  */
-const char bell         = '\7';
+static const char bell         = '\7';
 
 /** Escape.
  */
-const char esc          = '\033';
+static const char esc          = '\033';
 
 /** Space.
  */
-const char sp           = ' ';
+static const char sp           = ' ';
 
 /** CrLf.
  */
-const char crlf[]       = "\r\n";
+static const char crlf[]       = "\r\n";
 
 /** Backspace that 'tries' to wipe the last character.
  */
-const char bs[]         = "\b \b";
+static const char bs[]         = "\b \b";
 
 /** VT100 Bold Command.
  */
-const char boldon[]     = "\033[1m";
+static const char boldon[]     = "\033[1m";
 
 /** VT100 Normal Command.
  */
-const char boldoff[]    = "\033[0m";
+static const char boldoff[]    = "\033[0m";
 
 /** VT100 Cls Command.
  */
-const char cls[]        = "\033[2J";
+static const char cls[]        = "\033[2J";
 
 /** VT100 Home Command.
  */
-const char home[]       = "\033[H";
+static const char home[]       = "\033[H";
 
 /** The default command prompt.
  */
-const char PROMPT[]     = "CMD>";
+static const char PROMPT[]     = "CMD>";
 
 //------------------------------------------------------------------------------
 
@@ -290,61 +257,61 @@ const char PROMPT[]     = "CMD>";
  *
  * Optional.
  */
-const cmd COMMANDS("Commands",GLOBALCMD,CID_COMMANDS,"","Dump Commands");
+static const cmd COMMANDS = {"Commands",GLOBALCMD,CID_COMMANDS,"","Dump Commands"};
 
 /** The Boot Command.
  *
  * Optional.
  */
-const cmd BOOT("Boot",GLOBALCMD,CID_BOOT,"","Boot mBed");
+static const cmd BOOT = {"Boot",GLOBALCMD,CID_BOOT,"","Boot mBed"};
 
 /** The Macro Command.
  *
  * Optional.
  */
-const cmd MACRO("Macro",GLOBALCMD,CID_MACRO,"%s","Define macro (sp->_, cr->|)","command(s)");
+static const cmd MACRO = {"Macro",GLOBALCMD,CID_MACRO,"%s","Define macro (sp->_, cr->|)","command(s)"};
 
 /** The Run Command.
  *
  * Optional.
  */
-const cmd RUN("Run",GLOBALCMD,CID_RUN,"","Run a macro");
+static const cmd RUN = {"Run",GLOBALCMD,CID_RUN,"","Run a macro"};
 
 /** The Macros Command.
  *
  * Optional.
  */
-const cmd MACROS("Macros",GLOBALCMD,CID_MACROS,"","List macro(s)");
+static const cmd MACROS = {"Macros",GLOBALCMD,CID_MACROS,"","List macro(s)"};
 
 /** The Echo Command.
  *
  * Optional.
  */
-const cmd ECHO("Echo",GLOBALCMD,CID_ECHO,"%bu","Echo On|Off (1|0)","state");
+static const cmd ECHO = {"Echo",GLOBALCMD,CID_ECHO,"%bu","Echo On|Off (1|0)","state"};
 
 /** The Bold Command.
  *
  * Optional.
  */
-const cmd BOLD("Bold",GLOBALCMD,CID_BOLD,"%bu","Bold On|Off (1|0)","state");
+static const cmd BOLD = {"Bold",GLOBALCMD,CID_BOLD,"%bu","Bold On|Off (1|0)","state"};
 
 /** The Cls Command.
  *
  * Optional.
  */
-const cmd CLS("Cls",GLOBALCMD,CID_CLS,"","Clears the terminal screen");
+static const cmd CLS = {"Cls",GLOBALCMD,CID_CLS,"","Clears the terminal screen"};
 
 /** The Idle Command.
  *
  * Mandatory if you use subsystems.
  */
-const cmd IDLE("Idle",GLOBALCMD,CID_IDLE,"","Deselect Subsystems");
+static const cmd IDLE = {"Idle",GLOBALCMD,CID_IDLE,"","Deselect Subsystems"};
 
 /** The Help Command.
  *
  * Mandatory.
  */
-const cmd HELP("Help",GLOBALCMD,CID_HELP,"%s","Help");
+static const cmd HELP = {"Help",GLOBALCMD,CID_HELP,"%s","Help"};
 
 //------------------------------------------------------------------------------
 
@@ -371,7 +338,7 @@ enum {
 
 /** The Escape Codes Table.
  */
-const struct esc esc_tbl [ESC_TBL_LEN] = {
+static const struct esc esc_tbl [ESC_TBL_LEN] = {
     { "\033[A",    EID_CURSOR_UP    },
     { "\033[B",    EID_CURSOR_DOWN  },
     { "\033[C",    EID_CURSOR_RIGHT },
@@ -382,7 +349,7 @@ const struct esc esc_tbl [ESC_TBL_LEN] = {
 
 /** The Command Interpreter Version.
  */
-#define CMDB_VERSION     0.78
+#define CMDB_VERSION     0.80
 
 //------------------------------------------------------------------------------
 
@@ -428,6 +395,14 @@ public:
     static float version() {
         return CMDB_VERSION;
     }
+
+    /** NULL is used as No Comment Value.
+      */
+    static const char* NoComment;
+
+    /** Column 72 is used as Default Comment Starting Position.
+      */
+    static int DefComPos;
 
     /** Checks if the macro buffer has any characters left.
      *
@@ -510,6 +485,69 @@ public:
      * @returns the printf return value.
      */
     char printch(const char ch);
+
+    /** printsection prints an inifile Section Header
+     *  like:
+     *
+     *  [Section]\r\n
+     *
+     *  Usage: cmdb.printsection("GP");
+     *
+     *  @parm section the section to print.
+     *
+     *  @returns the printf return value.
+     */
+    int printsection(const char *section);
+
+    /** printvalue prints an inifile Key/Value Pair
+     *  like:
+     *
+     *  Key=Value   ;comment\r\n
+     *
+     *  Note: the Comment is (if present) located at position 72.
+     *
+     *  Usage: cmdb.printvaluef("Value", Cmdb::DefComPos, "Hex", "0x%8.8X", LPC_RTC->GPREG0);
+     *
+     * @parm key the key to print.
+     * @parm comment the comment to print.
+     * @parm width the location of the comment to print.
+     * @parm format the value to print.
+     * @parm parameter to print.
+     *
+     * @returns the printf return value.
+     */
+    int printvaluef(const char *key, const int width, const char *comment, const char *format, ...);
+
+    /** printvalue prints an inifile Key/Value Pair
+     *  like:
+     *
+     *  Key=Value\r\n
+     *
+     *  Usage: cmdb.printvaluef("Value", "0x%8.8X", LPC_RTC->GPREG0);
+     *
+     * @parm key the key to print.
+     * @parm format the value to print.
+     * @parm parameter to print.
+     *
+     * @returns the printf return value.
+     */
+    int printvaluef(const char *key, const char *format, ...);
+
+    /** printvalue prints an inifile Key/Value Pair
+     *  like:
+     *
+     *  Key=Value   ;comment\r\n
+     *
+     *  Note the Comment is (if present) located at position 72.
+     *
+     * @parm key the key to print.
+     * @parm value the value to print.
+     * @parm comment the comment to print.
+     * @parm width the location of the comment to print.
+     *
+     * @returns the printf return value.
+     */
+    int printvalue(const char *key, const char *value, const char *comment = NoComment, const int width = DefComPos);
 
 //------------------------------------------------------------------------------
 
