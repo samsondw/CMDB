@@ -275,6 +275,11 @@ int   Cmdb::printsection(const char *section) {
     return printf("[%s]\r\n", section);
 }
 
+int printerror(const char *errormsg) {
+    printsection("Error");
+    printf("Msg=%s\r\n", errormsg);
+}
+
 int   Cmdb::printvaluef(const char *key, const char *format, ...) {
     char buf[256];
 

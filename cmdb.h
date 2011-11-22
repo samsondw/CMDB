@@ -499,6 +499,19 @@ public:
      */
     int printsection(const char *section);
 
+      /** printerror prints an inifile Error Section Header and Error Msg Key=Value pair.
+     *  like:
+     *
+     *  [Error]\r\nmsg={errormsg}\r\n
+     *
+     *  Usage: cmdb.printerror("Data Size Incorrect");
+     *
+     *  @parm errormsg the error msg to print.
+     *
+     *  @returns the printf return value.
+     */
+    int printerror(const char *errormsg);
+        
     /** printvalue prints an inifile Key/Value Pair
      *  like:
      *
