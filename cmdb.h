@@ -499,7 +499,20 @@ public:
      */
     int printsection(const char *section);
 
-      /** printerror prints an inifile Error Section Header and Error Msg Key=Value pair.
+    /** printmsg prints an inifile Msg Key=Value pair.
+     *  like:
+     *
+     *  Msg={msg}\r\n
+     *
+     *  Usage: cmdb.printmsg("Validation successfull");
+     *
+     *  @parm msg the msg to print.
+     *
+     *  @returns the printf return value.
+     */
+    int   Cmdb::printmsg(const char *msg);
+
+    /** printerror prints an inifile Error Section Header and Error Msg Key=Value pair.
      *  like:
      *
      *  [Error]\r\nmsg={errormsg}\r\n
@@ -511,7 +524,7 @@ public:
      *  @returns the printf return value.
      */
     int printerror(const char *errormsg);
-        
+
     /** printvalue prints an inifile Key/Value Pair
      *  like:
      *

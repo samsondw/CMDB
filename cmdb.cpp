@@ -30,21 +30,21 @@ _____________________________________________________________________________
              replace() can be used to replace the complete command vector
              by a changed done. Inserting directly into cmdb's copy fails
              somehow.
-   19092011 -Added PrintSection(), PrintValue() and PrintValuef() for 
-             easier Windows Ini File style output. As I use it to transfer 
+   19092011 -Added PrintSection(), PrintValue() and PrintValuef() for
+             easier Windows Ini File style output. As I use it to transfer
              data back to the PC (Easy parsing AND you can add/remove
              debug information without breaking PC code).
    20092011 -Breaking change, Made all cmd object static const like:
-   
+
              static const cmd HELP = {"Help",GLOBALCMD,CID_HELP,"%s","Help"};
 
-             this saves just to much ram memory on the heap. 
+             this saves just to much ram memory on the heap.
              Thanks to Igor Skochinsky.
-             
-            -Made some more const string static.     
+
+            -Made some more const string static.
             -v0.80
 
-   20092011 -Corrected Comment Alignment.     
+   20092011 -Corrected Comment Alignment.
             -v0.81
    -------- --------------------------------------------------------------
    TODO's
@@ -275,9 +275,13 @@ int   Cmdb::printsection(const char *section) {
     return printf("[%s]\r\n", section);
 }
 
-int printerror(const char *errormsg) {
-    printsection("Error");
-    printf("Msg=%s\r\n", errormsg);
+int   Cmdb::printmsg(const char *msg) {
+    return printf("Msg=%s\r\n", msg);
+}
+
+int   Cmdb::printerror(const char *errormsg) {
+    int a = printsection("Error");
+    return a==0?a:a+printmsg("%s\r\n", errormsg);
 }
 
 int   Cmdb::printvaluef(const char *key, const char *format, ...) {
@@ -287,7 +291,7 @@ int   Cmdb::printvaluef(const char *key, const char *format, ...) {
     va_start(args, format);
 
     vsnprintf(buf, sizeof(buf), format, args);
-    
+
     va_end(args);
 
     return printf("%s=%s\r\n",key, buf);
@@ -305,7 +309,7 @@ int   Cmdb::printvaluef(const char *key, const int width, const char *comment, c
 
     cnt = vsnprintf(buf, sizeof(buf), format, args);
     cnt +=strlen(key) + 1;
-    
+
     va_end(args);
 
     if (comment!=NULL) {
