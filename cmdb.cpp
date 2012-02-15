@@ -271,6 +271,10 @@ int   Cmdb::print(const char *msg) {
     return serial.printf(msg);
 }
 
+int   Cmdb::println(const char *msg) {
+    return serial.printf("%s\r\n", msg);
+}
+
 int   Cmdb::printsection(const char *section) {
     return printf("[%s]\r\n", section);
 }
@@ -281,7 +285,22 @@ int   Cmdb::printmsg(const char *msg) {
 
 int   Cmdb::printerror(const char *errormsg) {
     int a = printsection("Error");
-    return a==0?a:a+printmsg("%s\r\n", errormsg);
+    return a==0?a:a+printmsg(errormsg);
+}
+
+int   Cmdb::printerrorf(const char *format, ...) {
+    char buf[256];
+
+    int a = printsection("Error");
+    
+    va_list args;
+    va_start(args, format);
+
+    vsnprintf(buf, sizeof(buf), format, args);
+
+    va_end(args);
+
+    return a +  printf("Msg=%s\r\n", buf);
 }
 
 int   Cmdb::printvaluef(const char *key, const char *format, ...) {
@@ -298,31 +317,30 @@ int   Cmdb::printvaluef(const char *key, const char *format, ...) {
 }
 
 int   Cmdb::printvaluef(const char *key, const int width, const char *comment, const char *format, ...) {
-    printf("%s=",key);
-
-    int  result = 0;
     char buf[256];
-    int  cnt = 0;
+    
+    int  cnt = printf("%s=",key);
 
     va_list args;
     va_start(args, format);
 
-    cnt = vsnprintf(buf, sizeof(buf), format, args);
-    cnt +=strlen(key) + 1;
-
+    vsnprintf(buf, sizeof(buf), format, args);
+   
     va_end(args);
 
     if (comment!=NULL) {
+        cnt += printf("%s", buf);
+
         if (cnt<width) {
-            result = printf("%-*s ;%s\r\n", width - cnt + 3, buf, comment);
+            cnt += printf("%-*s ; %s\r\n", width - cnt - 1, "", comment);
         } else {
-            result = printf("%s ;%s\r\n", buf, comment);
+            cnt += printf("%s ; %s\r\n", "", comment);
         }
     } else {
-        result = printf("%s\r\n",buf);
+        cnt += printf("%s\r\n",buf);
     }
 
-    return result;
+    return cnt;
 }
 
 int   Cmdb::printvalue(const char *key, const char *value, const char *comment, const int width) {
@@ -334,19 +352,26 @@ int   Cmdb::printvalue(const char *key, const char *value, const char *comment, 
 
         cnt = snprintf(buf, sizeof(buf), "%s=%s", key, value);
 
-        if (cnt<width) {
-            return printf("%-*s ;%s\r\n", width, buf, comment);
+        if (cnt<=width) {
+            return printf("%-*s ; %s\r\n", width - cnt + 1, buf, comment);
         } else {
-            return printf("%s ;%s\r\n", buf, comment);
+            return printf("%s ; %s\r\n", buf, comment);
         }
     } else {
         return printf("%s=%s\r\n", key, value);
     }
 }
 
+int   Cmdb::printcomment(const char *comment, const int width) {
+    return printf("%-*s; %s\r\n", width, "", comment); 
+}
+
 char  Cmdb::printch(const char ch) {
     return serial.putc(ch);
 }
+
+//Mode=1               ; Profile Position Mode
+//1234567890123456789012
 
 //------------------------------------------------------------------------------
 
@@ -565,18 +590,15 @@ int Cmdb::parse(char *cmd) {
 
                 endptr = (char*)toks[i];
 
-                //Cardinal Types
                 switch (typ) {
+                    //Signed Cardinal Types
                     case 'd' :  //Check mod
                     case 'i' :  //Check mod
-                    case 'u' :  //Check mod
-                    case 'o' :  //Check mod
-                    case 'x' :  //Check mod
                         switch (mod) {
                             case 'b' : //char
                                 //test range
                                 l=strtol((char*)toks[i], &endptr, base);
-                                if (l>=MIN_BYTE && l<=MAX_BYTE) {
+                                if (l>=MIN_CHAR && l<=MAX_CHAR) {
                                     parms[i].type=PARM_CHAR;
                                     parms[i].val.uc =(unsigned char)l;
                                 } else {
@@ -603,6 +625,57 @@ int Cmdb::parse(char *cmd) {
                             default: //int
                                 l=strtol((char*)toks[i], &endptr, base);
                                 if (l>=MIN_INT && l<=MAX_INT) {
+                                    parms[i].type=PARM_INT;
+                                    parms[i].val.l=(int)l;
+                                } else {
+                                    error = i+1;
+                                }
+                                break;
+                        }
+
+                        if (error==0 &&
+                                (endptr==toks[i]    //No Conversion at all.
+                                 || *endptr)) {       //Incomplete conversion.
+                            error = i+1;
+                        }
+
+                        break;
+
+                    //Unsigned Cardinal Types
+                    case 'u' :  //Check mod
+                    case 'o' :  //Check mod
+                    case 'x' :  //Check mod
+                        switch (mod) {
+                            case 'b' : //char
+                                //test range
+                                l=strtol((char*)toks[i], &endptr, base);
+                                if (l>=MIN_BYTE && l<=MAX_BYTE) {
+                                    parms[i].type=PARM_CHAR;
+                                    parms[i].val.uc =(unsigned char)l;
+                                } else {
+                                    error = i+1;
+                                }
+
+                                break;
+                            case 'h' : //short
+                                l=strtol((char*)toks[i], &endptr, base);
+                                if (l>=MIN_USHORT && l<=MAX_USHORT) {
+                                    parms[i].type=PARM_SHORT;
+                                    parms[i].val.w=(short)l;
+                                } else {
+                                    error = i+1;
+                                }
+
+                                break;
+                            case 'l' : //long
+                                l=strtol((char*)toks[i], &endptr, base);
+                                parms[i].type=PARM_LONG;
+                                parms[i].val.l=l;
+
+                                break;
+                            default: //int
+                                l=strtol((char*)toks[i], &endptr, base);
+                                if (l>=MIN_UINT && l<=MAX_UINT) {
                                     parms[i].type=PARM_INT;
                                     parms[i].val.l=(int)l;
                                 } else {

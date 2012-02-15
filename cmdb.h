@@ -74,13 +74,25 @@
  *
  * @see http://www.daniweb.com/forums/thread18963.html
  */
-#define MIN_BYTE        std::numeric_limits<signed char>::min()
+#define MIN_BYTE        std::numeric_limits<unsigned char>::min()
 
 /** 8 bit limits.
  *
  * @see http://www.daniweb.com/forums/thread18963.html
  */
-#define MAX_BYTE        std::numeric_limits<signed char>::max()
+#define MAX_BYTE        std::numeric_limits<unsigned char>::max()
+
+/** 8 bit limits.
+ *
+ * @see http://www.daniweb.com/forums/thread18963.html
+ */
+#define MIN_CHAR        std::numeric_limits<signed char>::min()
+
+/** 8 bit limits.
+ *
+ * @see http://www.daniweb.com/forums/thread18963.html
+ */
+#define MAX_CHAR        std::numeric_limits<signed char>::max()
 
 /** 16 bit limits.
  *
@@ -94,12 +106,31 @@
  */
 #define MAX_SHORT     std::numeric_limits<short int>::max()
 
+/** 16 bit limits.
+ *
+ * @see http://www.daniweb.com/forums/thread18963.html
+ */
+#define MIN_USHORT     std::numeric_limits<unsigned short int>::min()
+
+/** 16 bit limits.
+ *
+ * @see http://www.daniweb.com/forums/thread18963.html
+ */
+#define MAX_USHORT     std::numeric_limits<unsigned short int>::max()
+
 /** 32 bit limits.
  *
  * @see http://www.daniweb.com/forums/thread18963.html
  */
 #define MIN_INT       std::numeric_limits<int>::min()
 #define MAX_INT       std::numeric_limits<int>::max()
+
+/** 32 bit limits.
+ *
+ * @see http://www.daniweb.com/forums/thread18963.html
+ */
+#define MIN_UINT       std::numeric_limits<unsigned int>::min()
+#define MAX_UINT       std::numeric_limits<unsigned int>::max()
 
 /** 32 bit limits.
  *
@@ -478,6 +509,14 @@ public:
      */
     int print(const char *msg);
 
+    /** println is simply printf without parameters using the serial parameter passed to the constructor.
+     *
+     * @parm msg the string to print followed by a crlf.
+     *
+     * @returns the printf return value.
+     */
+    int println(const char *msg);
+    
     /** printch is simply putc subsitute using the serial parameter passed to the constructor.
      *
      * @parm msg the string to print.
@@ -510,7 +549,7 @@ public:
      *
      *  @returns the printf return value.
      */
-    int   Cmdb::printmsg(const char *msg);
+    int printmsg(const char *msg);
 
     /** printerror prints an inifile Error Section Header and Error Msg Key=Value pair.
      *  like:
@@ -519,12 +558,26 @@ public:
      *
      *  Usage: cmdb.printerror("Data Size Incorrect");
      *
-     *  @parm errormsg the error msg to print.
+     * @parm errormsg the error msg to print.
      *
-     *  @returns the printf return value.
+     * @returns the printf return value.
      */
     int printerror(const char *errormsg);
 
+    /** printerror prints an inifile Error Section Header and Error Msg Key=Value pair.
+     *  like:
+     *
+     *  [Error]\r\nmsg={errormsg}\r\n
+     *
+     *  Usage: cmdb.printerrorf("Data Size Incorrect %d", 15);
+     *
+     * @parm format the error msg to print.
+     * @parm parameter to print.
+     *
+     * @returns the printf return value.
+     */
+    int printerrorf(const char *format, ...);
+    
     /** printvalue prints an inifile Key/Value Pair
      *  like:
      *
@@ -574,6 +627,8 @@ public:
      * @returns the printf return value.
      */
     int printvalue(const char *key, const char *value, const char *comment = NoComment, const int width = DefComPos);
+
+    int printcomment(const char *comment, const int width = DefComPos);
 
 //------------------------------------------------------------------------------
 
