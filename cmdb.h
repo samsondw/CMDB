@@ -1,5 +1,5 @@
 /* mbed Command Interpreter Library
- * Copyright (c) 2011 wvd_vegt
+ * Copyright (c) 2016 wvd_vegt
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -417,7 +417,7 @@ public:
      * @param serial a Serial port used for communication.
      * @param cmds a vector with the command table.
      */
-    Cmdb(const Serial& _serial, std::vector<cmd>& _cmds, void (*_callback)(Cmdb&,int) );
+    Cmdb(const RawSerial& _serial, std::vector<cmd>& _cmds, void (*_callback)(Cmdb&,int) );
 
     /** The version of the Command Interpreter.
      *
@@ -813,7 +813,7 @@ private:
 
     /** Internal Serial Port Storage.
     */
-    Serial serial;
+    RawSerial serial;
 
     /** Internal Command Table Vector Storage.
      *

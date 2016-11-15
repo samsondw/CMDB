@@ -1,9 +1,31 @@
+/* mbed Command Interpreter Library
+ * Copyright (c) 2016 wvd_vegt
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
 /*
 _____________________________________________________________________________
 
    Project:     mBed Command Interpreter
    Filename:    cmdb.h
-   Version:     0.80
+   Version:     0.85
 _____________________________________________________________________________
    Date         Comment
    -------- --------------------------------------------------------------
@@ -46,6 +68,12 @@ _____________________________________________________________________________
 
    20092011 -Corrected Comment Alignment.
             -v0.81
+
+   20092011 -Switched to RawSerial to be compatible with the latest mBed lib (129).
+            -Serial is no longer an issue because of the Stream class underneath 
+             with its hidden constructor.
+            -Not fully tested yet.
+            -v0.85
    -------- --------------------------------------------------------------
    TODO's
    10022011 -Tweak and Review Documentation.
@@ -67,7 +95,7 @@ _____________________________________________________________________________
 
 //------------------------------------------------------------------------------
 
-Cmdb::Cmdb(const Serial& _serial, std::vector<cmd>& _cmds, void (*_callback)(Cmdb&,int)) :
+Cmdb::Cmdb(const RawSerial& _serial, std::vector<cmd>& _cmds, void (*_callback)(Cmdb&,int)) :
         serial(_serial), cmds(_cmds) {
     echo = true;
     bold = true;
