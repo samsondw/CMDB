@@ -25,7 +25,7 @@ _____________________________________________________________________________
 
    Project:     mBed Command Interpreter
    Filename:    cmdb.h
-   Version:     0.85
+   Version:     0.86
 _____________________________________________________________________________
    Date         Comment
    -------- --------------------------------------------------------------
@@ -74,6 +74,9 @@ _____________________________________________________________________________
              with its hidden constructor.
             -Not fully tested yet.
             -v0.85
+
+   20092011 -Serial port passed by pointer to prevent copy constructor error.
+            -v0.86
    -------- --------------------------------------------------------------
    TODO's
    10022011 -Tweak and Review Documentation.
@@ -95,7 +98,7 @@ _____________________________________________________________________________
 
 //------------------------------------------------------------------------------
 
-Cmdb::Cmdb(const RawSerial& _serial, std::vector<cmd>& _cmds, void (*_callback)(Cmdb&,int)) :
+Cmdb::Cmdb(RawSerial *_serial, std::vector<cmd>& _cmds, void (*_callback)(Cmdb&,int)) :
         serial(_serial), cmds(_cmds) {
     echo = true;
     bold = true;
@@ -152,11 +155,11 @@ void  Cmdb::macro_reset() {
 //------------------------------------------------------------------------------
 
 bool  Cmdb::hasnext() {
-    return serial.readable()==1;
+    return serial->readable()==1;
 }
 
 char  Cmdb::next() {
-    return serial.getc();
+    return serial->getc();
 }
 
 //------------------------------------------------------------------------------
@@ -296,11 +299,11 @@ int   Cmdb::printf(const char *format, ...) {
 }
 
 int   Cmdb::print(const char *msg) {
-    return serial.printf(msg);
+    return serial->printf(msg);
 }
 
 int   Cmdb::println(const char *msg) {
-    return serial.printf("%s\r\n", msg);
+    return serial->printf("%s\r\n", msg);
 }
 
 int   Cmdb::printsection(const char *section) {
@@ -395,7 +398,7 @@ int   Cmdb::printcomment(const char *comment, const int width) {
 }
 
 char  Cmdb::printch(const char ch) {
-    return serial.putc(ch);
+    return serial->putc(ch);
 }
 
 //Mode=1               ; Profile Position Mode
