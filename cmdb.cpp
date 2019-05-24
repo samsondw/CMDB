@@ -1,5 +1,5 @@
 /* mbed Command Interpreter Library
- * Copyright (c) 2016 wvd_vegt
+ * Copyright (c) 2016 wvd_vegt, 2019 sweaver
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -75,8 +75,8 @@ _____________________________________________________________________________
             -Not fully tested yet.
             -v0.85
 
-   20092011 -Serial port passed by pointer to prevent copy constructor error.
-            -v0.86
+   5/24/2019 -Serial port passed by pointer to prevent copy constructor error.
+            -v0.86, sweaver
    -------- --------------------------------------------------------------
    TODO's
    10022011 -Tweak and Review Documentation.

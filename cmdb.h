@@ -1,5 +1,5 @@
 /* mbed Command Interpreter Library
- * Copyright (c) 2016 wvd_vegt
+ * Copyright (c) 2016 wvd_vegt, 2019 sweaver
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
