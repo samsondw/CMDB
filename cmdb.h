@@ -32,7 +32,7 @@
 
 /** Max size of an Ansi escape code.
  */
-#define MAX_ESC_LEN   5
+#define MAX_ESC_LEN 5
 
 /** Max (strlen) of a Param.
  */
@@ -40,7 +40,7 @@
 
 /** Max eight parms.
  */
-#define MAX_ARGS      8
+#define MAX_ARGS 8
 
 /** Max 132 characters commandline.
  */
@@ -74,80 +74,81 @@
  *
  * @see http://www.daniweb.com/forums/thread18963.html
  */
-#define MIN_BYTE        std::numeric_limits<unsigned char>::min()
+#define MIN_BYTE std::numeric_limits<unsigned char>::min()
 
 /** 8 bit limits.
  *
  * @see http://www.daniweb.com/forums/thread18963.html
  */
-#define MAX_BYTE        std::numeric_limits<unsigned char>::max()
+#define MAX_BYTE std::numeric_limits<unsigned char>::max()
 
 /** 8 bit limits.
  *
  * @see http://www.daniweb.com/forums/thread18963.html
  */
-#define MIN_CHAR        std::numeric_limits<signed char>::min()
+#define MIN_CHAR std::numeric_limits<signed char>::min()
 
 /** 8 bit limits.
  *
  * @see http://www.daniweb.com/forums/thread18963.html
  */
-#define MAX_CHAR        std::numeric_limits<signed char>::max()
+#define MAX_CHAR std::numeric_limits<signed char>::max()
 
 /** 16 bit limits.
  *
  * @see http://www.daniweb.com/forums/thread18963.html
  */
-#define MIN_SHORT     std::numeric_limits<short int>::min()
+#define MIN_SHORT std::numeric_limits<short int>::min()
 
 /** 16 bit limits.
  *
  * @see http://www.daniweb.com/forums/thread18963.html
  */
-#define MAX_SHORT     std::numeric_limits<short int>::max()
+#define MAX_SHORT std::numeric_limits<short int>::max()
 
 /** 16 bit limits.
  *
  * @see http://www.daniweb.com/forums/thread18963.html
  */
-#define MIN_USHORT     std::numeric_limits<unsigned short int>::min()
+#define MIN_USHORT std::numeric_limits<unsigned short int>::min()
 
 /** 16 bit limits.
  *
  * @see http://www.daniweb.com/forums/thread18963.html
  */
-#define MAX_USHORT     std::numeric_limits<unsigned short int>::max()
+#define MAX_USHORT std::numeric_limits<unsigned short int>::max()
 
 /** 32 bit limits.
  *
  * @see http://www.daniweb.com/forums/thread18963.html
  */
-#define MIN_INT       std::numeric_limits<int>::min()
-#define MAX_INT       std::numeric_limits<int>::max()
+#define MIN_INT std::numeric_limits<int>::min()
+#define MAX_INT std::numeric_limits<int>::max()
 
 /** 32 bit limits.
  *
  * @see http://www.daniweb.com/forums/thread18963.html
  */
-#define MIN_UINT       std::numeric_limits<unsigned int>::min()
-#define MAX_UINT       std::numeric_limits<unsigned int>::max()
+#define MIN_UINT std::numeric_limits<unsigned int>::min()
+#define MAX_UINT std::numeric_limits<unsigned int>::max()
 
 /** 32 bit limits.
  *
  * @see http://www.daniweb.com/forums/thread18963.html
  */
-#define MIN_LONG      std::numeric_limits<long>::min()
-#define MAX_LONG      std::numeric_limits<long>::max()
+#define MIN_LONG std::numeric_limits<long>::min()
+#define MAX_LONG std::numeric_limits<long>::max()
 
 //------------------------------------------------------------------------------
 
 /** Description of a command.
  */
-struct cmd {
+struct cmd
+{
 public:
     const char *cmdstr;
-    int  subs;
-    int  cid;
+    int subs;
+    int cid;
     const char *parms;
     const char *cmddescr;
     const char *parmdescr;
@@ -157,65 +158,65 @@ public:
 
 /** Cr.
  */
-static const char cr           = '\r';
+static const char cr = '\r';
 
 /** Lf.
  */
-static const char lf           = '\n';
+static const char lf = '\n';
 
 /** Bell.
  */
-static const char bell         = '\7';
+static const char bell = '\7';
 
 /** Escape.
  */
-static const char esc          = '\033';
+static const char esc = '\033';
 
 /** Space.
  */
-static const char sp           = ' ';
+static const char sp = ' ';
 
 /** CrLf.
  */
-static const char crlf[]       = "\r\n";
+static const char crlf[] = "\r\n";
 
 /** Backspace that 'tries' to wipe the last character.
  */
-static const char bs[]         = "\b \b";
+static const char bs[] = "\b \b";
 
 /** VT100 Bold Command.
  */
-static const char boldon[]     = "\033[1m";
+static const char boldon[] = "\033[1m";
 
 /** VT100 Normal Command.
  */
-static const char boldoff[]    = "\033[0m";
+static const char boldoff[] = "\033[0m";
 
 /** VT100 Cls Command.
  */
-static const char cls[]        = "\033[2J";
+static const char cls[] = "\033[2J";
 
 /** VT100 Home Command.
  */
-static const char home[]       = "\033[H";
+static const char home[] = "\033[H";
 
 /** The default command prompt.
  */
-static const char PROMPT[]     = "CMD>";
+static const char PROMPT[] = "CMD>";
 
 //------------------------------------------------------------------------------
 
 /** Subsystem Id for a Subsystem.
  */
-#define SUBSYSTEM         -1
+#define SUBSYSTEM -1
 
 /** Subsystem Id for a Global Command (always available).
  */
-#define GLOBALCMD         -2
+#define GLOBALCMD -2
 
 /** Subsystem Id for a Hidden Subsystem (ommitted from help).
  */
-#define HIDDENSUB         -3
+#define HIDDENSUB -3
 
 /** Predefined Dump Command.
  */
@@ -223,62 +224,62 @@ static const char PROMPT[]     = "CMD>";
 
 /** Predefined Boot Command.
  */
-#define CID_BOOT    9990
+#define CID_BOOT 9990
 
 /** Predefined Macro Command.
  *
  * This command will take a string with spaces replace by _ and cr replace by | for later replay with run.
  */
-#define CID_MACRO   9991
+#define CID_MACRO 9991
 
 /** Predefined Macro Command.
  *
  * This command replay a macro.
  */
-#define CID_RUN     9992
+#define CID_RUN 9992
 
 /** Predefined Macro Command.
  *
  * This command print the current macro.
  */
-#define CID_MACROS  9993
+#define CID_MACROS 9993
 
 /** Predefined Echo Command.
  *
  * This command turn echo on or off.
  */
-#define CID_ECHO    9994
+#define CID_ECHO 9994
 
 /** Predefined VT100 Bold Command.
  *
  * This command turn VT100 bold usage on or off.
  */
-#define CID_BOLD    9995
+#define CID_BOLD 9995
 
 /** Predefined VT100 Cls Command.
  *
  * This command will clear the screen.
  */
-#define CID_CLS     9996
+#define CID_CLS 9996
 
 /** Predefined Idle Command.
  *
  * This command will return to the global command level, leaving the active subsystem.
  */
-#define CID_IDLE    9997
+#define CID_IDLE 9997
 
 /** Predefined Help Command.
  *
  * This command will either print all active command (without parameters) or a more detailed
  * help for a command passed as parameter.
  */
-#define CID_HELP    9998
+#define CID_HELP 9998
 
 /** Predefided Semi Command.
  *
  * CID_LAST only functions as a special Commend Id to signal unknown commands.
  */
-#define CID_LAST    9999
+#define CID_LAST 9999
 
 //------------------------------------------------------------------------------
 
@@ -288,78 +289,80 @@ static const char PROMPT[]     = "CMD>";
  *
  * Optional.
  */
-static const cmd COMMANDS = {"Commands",GLOBALCMD,CID_COMMANDS,"","Dump Commands"};
+static const cmd COMMANDS = {"Commands", GLOBALCMD, CID_COMMANDS, "", "Dump Commands"};
 
 /** The Boot Command.
  *
  * Optional.
  */
-static const cmd BOOT = {"Boot",GLOBALCMD,CID_BOOT,"","Boot mBed"};
+static const cmd BOOT = {"Boot", GLOBALCMD, CID_BOOT, "", "Boot mBed"};
 
 /** The Macro Command.
  *
  * Optional.
  */
-static const cmd MACRO = {"Macro",GLOBALCMD,CID_MACRO,"%s","Define macro (sp->_, cr->|)","command(s)"};
+static const cmd MACRO = {"Macro", GLOBALCMD, CID_MACRO, "%s", "Define macro (sp->_, cr->|)", "command(s)"};
 
 /** The Run Command.
  *
  * Optional.
  */
-static const cmd RUN = {"Run",GLOBALCMD,CID_RUN,"","Run a macro"};
+static const cmd RUN = {"Run", GLOBALCMD, CID_RUN, "", "Run a macro"};
 
 /** The Macros Command.
  *
  * Optional.
  */
-static const cmd MACROS = {"Macros",GLOBALCMD,CID_MACROS,"","List macro(s)"};
+static const cmd MACROS = {"Macros", GLOBALCMD, CID_MACROS, "", "List macro(s)"};
 
 /** The Echo Command.
  *
  * Optional.
  */
-static const cmd ECHO = {"Echo",GLOBALCMD,CID_ECHO,"%bu","Echo On|Off (1|0)","state"};
+static const cmd ECHO = {"Echo", GLOBALCMD, CID_ECHO, "%bu", "Echo On|Off (1|0)", "state"};
 
 /** The Bold Command.
  *
  * Optional.
  */
-static const cmd BOLD = {"Bold",GLOBALCMD,CID_BOLD,"%bu","Bold On|Off (1|0)","state"};
+static const cmd BOLD = {"Bold", GLOBALCMD, CID_BOLD, "%bu", "Bold On|Off (1|0)", "state"};
 
 /** The Cls Command.
  *
  * Optional.
  */
-static const cmd CLS = {"Cls",GLOBALCMD,CID_CLS,"","Clears the terminal screen"};
+static const cmd CLS = {"Cls", GLOBALCMD, CID_CLS, "", "Clears the terminal screen"};
 
 /** The Idle Command.
  *
  * Mandatory if you use subsystems.
  */
-static const cmd IDLE = {"Idle",GLOBALCMD,CID_IDLE,"","Deselect Subsystems"};
+static const cmd IDLE = {"Idle", GLOBALCMD, CID_IDLE, "", "Deselect Subsystems"};
 
 /** The Help Command.
  *
  * Mandatory.
  */
-static const cmd HELP = {"Help",GLOBALCMD,CID_HELP,"%s","Help"};
+static const cmd HELP = {"Help", GLOBALCMD, CID_HELP, "%s", "Help"};
 
 //------------------------------------------------------------------------------
 
 /** We'll only define the 4 cursor codes at the moment.
  */
-#define ESC_TBL_LEN  4
+#define ESC_TBL_LEN 4
 
 /** Escape code definition struct.
  */
-struct esc {
-    char     *escstr;
-    int     id;
+struct esc
+{
+    char *escstr;
+    int id;
 };
 
 /** The Escape Code Id's.
  */
-enum {
+enum
+{
     EID_CURSOR_UP,
     EID_CURSOR_DOWN,
     EID_CURSOR_RIGHT,
@@ -369,18 +372,18 @@ enum {
 
 /** The Escape Codes Table.
  */
-static const struct esc esc_tbl [ESC_TBL_LEN] = {
-    { "\033[A",    EID_CURSOR_UP    },
-    { "\033[B",    EID_CURSOR_DOWN  },
-    { "\033[C",    EID_CURSOR_RIGHT },
-    { "\033[D",    EID_CURSOR_LEFT  },
+static const struct esc esc_tbl[ESC_TBL_LEN] = {
+    {"\033[A", EID_CURSOR_UP},
+    {"\033[B", EID_CURSOR_DOWN},
+    {"\033[C", EID_CURSOR_RIGHT},
+    {"\033[D", EID_CURSOR_LEFT},
 };
 
 //------------------------------------------------------------------------------
 
 /** The Command Interpreter Version.
  */
-#define CMDB_VERSION     0.81
+#define CMDB_VERSION 0.86
 
 //------------------------------------------------------------------------------
 
@@ -406,7 +409,8 @@ static const struct esc esc_tbl [ESC_TBL_LEN] = {
  *
  * @see main.cpp for a demo.
  */
-class Cmdb {
+class Cmdb
+{
 public:
     /** Create a Command Interpreter.
      *
@@ -417,19 +421,20 @@ public:
      * @param serial a Serial port used for communication.
      * @param cmds a vector with the command table.
      */
-    Cmdb(const RawSerial& _serial, std::vector<cmd>& _cmds, void (*_callback)(Cmdb&,int) );
+    Cmdb(RawSerial *_serial, std::vector<cmd> &_cmds, void (*_callback)(Cmdb &, int));
 
     /** The version of the Command Interpreter.
      *
      * returns the version.
      */
-    static float version() {
+    static float version()
+    {
         return CMDB_VERSION;
     }
 
     /** NULL is used as No Comment Value.
       */
-    static const char* NoComment;
+    static const char *NoComment;
 
     /** Column 72 is used as Default Comment Starting Position.
       */
@@ -465,14 +470,14 @@ public:
     void macro_reset();
 
     /** Checks if the serial port has any characters
-     * left to read by calling serial.readable().
+     * left to read by calling serial->readable().
      *
      * @returns true if any characters available.
      */
     bool hasnext();
 
     /** Gets the next character from the serial port by
-     *  calling serial.getc().
+     *  calling serial->getc().
      *
      *  Do not call if no characters are left!
      *
@@ -516,7 +521,7 @@ public:
      * @returns the printf return value.
      */
     int println(const char *msg);
-    
+
     /** printch is simply putc subsitute using the serial parameter passed to the constructor.
      *
      * @parm msg the string to print.
@@ -577,7 +582,7 @@ public:
      * @returns the printf return value.
      */
     int printerrorf(const char *format, ...);
-    
+
     /** printvalue prints an inifile Key/Value Pair
      *  like:
      *
@@ -630,7 +635,7 @@ public:
 
     int printcomment(const char *comment, const int width = DefComPos);
 
-//------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------
 
     /** Initializes the parser (called by the constructor).
      *
@@ -638,9 +643,9 @@ public:
      */
     void init(const char full);
 
-//------------------------------------------------------------------------------
-//----These helper functions retieve parameters in the correct format.
-//------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------
+    //----These helper functions retieve parameters in the correct format.
+    //------------------------------------------------------------------------------
 
     /** Typecasts parameter ndx to a bool.
      *
@@ -650,8 +655,9 @@ public:
      *
      * @return a bool
      */
-    bool BOOLPARM(int ndx) {
-        return parms[ndx].val.uc!=0;
+    bool BOOLPARM(int ndx)
+    {
+        return parms[ndx].val.uc != 0;
     }
 
     /** Typecasts parameter ndx to a byte/unsigned char.
@@ -662,7 +668,8 @@ public:
      *
      * @return a byte/unsigned char
      */
-    unsigned char BYTEPARM(int ndx) {
+    unsigned char BYTEPARM(int ndx)
+    {
         return parms[ndx].val.uc;
     }
 
@@ -674,7 +681,8 @@ public:
      *
      * @return a char
      */
-    char CHARPARM(int ndx) {
+    char CHARPARM(int ndx)
+    {
         return parms[ndx].val.c;
     }
 
@@ -686,7 +694,8 @@ public:
      *
      * @return a word/unsigned int
      */
-    unsigned int WORDPARM(int ndx) {
+    unsigned int WORDPARM(int ndx)
+    {
         return parms[ndx].val.ui;
     }
 
@@ -698,7 +707,8 @@ public:
      *
      * @return a unsigned int
      */
-    unsigned int UINTPARM(int ndx) {
+    unsigned int UINTPARM(int ndx)
+    {
         return parms[ndx].val.ui;
     }
 
@@ -710,7 +720,8 @@ public:
      *
      * @return a int
      */
-    int INTPARM(int ndx) {
+    int INTPARM(int ndx)
+    {
         return parms[ndx].val.i;
     }
 
@@ -722,7 +733,8 @@ public:
      *
      * @return a bool
      */
-    unsigned long DWORDPARM(int ndx) {
+    unsigned long DWORDPARM(int ndx)
+    {
         return parms[ndx].val.ul;
     }
 
@@ -734,7 +746,8 @@ public:
      *
      * @return a long
      */
-    long LONGPARM(int ndx) {
+    long LONGPARM(int ndx)
+    {
         return parms[ndx].val.l;
     }
 
@@ -746,7 +759,8 @@ public:
      *
      * @return a float
      */
-    float FLOATPARM(int ndx) {
+    float FLOATPARM(int ndx)
+    {
         return parms[ndx].val.f;
     }
 
@@ -760,20 +774,23 @@ public:
      *
      * @return a string
      */
-    char* STRINGPARM(int ndx) {
+    char *STRINGPARM(int ndx)
+    {
         return parms[ndx].val.s;
     }
 
-    bool present(char *cmdstr) {
-        return cmdid_search(cmdstr)!=CID_LAST;
+    bool present(char *cmdstr)
+    {
+        return cmdid_search(cmdstr) != CID_LAST;
     }
 
-    void replace(std::vector<cmd>& newcmds)  {
+    void replace(std::vector<cmd> &newcmds)
+    {
         cmds.assign(newcmds.begin(), newcmds.end());
     }
 
-
-    int indexof(int cid) {
+    int indexof(int cid)
+    {
         return cmdid_index(cid);
     }
 
@@ -810,10 +827,9 @@ public:
     */
 
 private:
-
     /** Internal Serial Port Storage.
     */
-    RawSerial serial;
+    RawSerial *serial;
 
     /** Internal Command Table Vector Storage.
      *
@@ -827,7 +843,7 @@ private:
      *
      * C++ member equivalent would be void (Cmdb::*callback)(Cmdb&,int);
      */
-    void (*user_callback)(Cmdb&,int);
+    void (*user_callback)(Cmdb &, int);
 
     /** Searches the escape code list for a match.
     *
@@ -851,7 +867,7 @@ private:
      *
      * @returns the index of the command or -1.
      */
-    int  cmdid_index(int cmdid);
+    int cmdid_index(int cmdid);
 
     /** Writes a prompt to the serial port.
      *
@@ -891,7 +907,7 @@ private:
      * @param p The string to be cleared.
      * @param siz The string size.
      */
-    void zeromemory(char *p,unsigned int siz);
+    void zeromemory(char *p, unsigned int siz);
 
     /** Case insensitive compare.
      *
@@ -902,7 +918,7 @@ private:
      *
      * @returns 0 if s1=s2, -1 if s1<s2 or +1 if s1>s2.
      */
-    int stricmp (char *s1, char *s2);
+    int stricmp(char *s1, char *s2);
 
     /** Internal Echo Flag Storage.
     */
@@ -927,44 +943,46 @@ private:
 
     /** Used for parsing parameters.
     */
-    enum parmtype {
-        PARM_UNUSED,            //0
+    enum parmtype
+    {
+        PARM_UNUSED, //0
 
-        PARM_FLOAT,             //1     (f)
+        PARM_FLOAT, //1     (f)
 
-        PARM_LONG,              //2     (l/ul)
-        PARM_INT,               //3     (i/ui)
-        PARM_SHORT,             //4     (w/uw)
+        PARM_LONG,  //2     (l/ul)
+        PARM_INT,   //3     (i/ui)
+        PARM_SHORT, //4     (w/uw)
 
-        PARM_CHAR,              //5     (c/uc)
-        PARM_STRING             //6     (s)
+        PARM_CHAR,  //5     (c/uc)
+        PARM_STRING //6     (s)
     };
 
     /** Used for parsing parameters.
     */
     union value {
-        float               f;
+        float f;
 
-        unsigned long       ul;
-        long                 l;
+        unsigned long ul;
+        long l;
 
-        int                  i;
-        unsigned int        ui;
+        int i;
+        unsigned int ui;
 
-        short                w;
-        unsigned short      uw;
+        short w;
+        unsigned short uw;
 
-        char                 c;
-        unsigned char       uc;
+        char c;
+        unsigned char uc;
 
-        char                 s[MAX_PARM_LEN];
+        char s[MAX_PARM_LEN];
     };
 
     /** Used for parsing parameters.
     */
-    struct parm {
-        enum parmtype    type;
-        union value     val;
+    struct parm
+    {
+        enum parmtype type;
+        union value val;
     };
 
     //------------------------------------------------------------------------------
@@ -973,47 +991,47 @@ private:
 
     /** Command Buffer.
     */
-    char    cmdbuf [1 + MAX_CMD_LEN];           // command buffer
+    char cmdbuf[1 + MAX_CMD_LEN]; // command buffer
 
     /** Command Buffer Pointer.
     */
-    char    cmdndx;                             // command index
+    char cmdndx; // command index
 
     /** Last Command Buffer (Used when pressing Cursor Up).
     */
-    char    lstbuf [1 + MAX_CMD_LEN];           // last command buffer
+    char lstbuf[1 + MAX_CMD_LEN]; // last command buffer
 
     /** Escape Code Buffer.
     */
-    char    escbuf [1 + MAX_ESC_LEN];
+    char escbuf[1 + MAX_ESC_LEN];
 
     /** Escape Code Buffer Pointer.
     */
-    unsigned char   escndx;
+    unsigned char escndx;
 
     /** Storage for Parsed Parameters
     */
-    struct  parm parms[MAX_ARGS];
+    struct parm parms[MAX_ARGS];
 
     /** Parsed Parameters Pointer.
      */
-    int     noparms;
+    int noparms;
 
     /** Current Selected Subsystem (-1 for Global).
     */
-    int     subsystem;
+    int subsystem;
 
     /** No of arguments found in command.
     */
-    int     argcnt;
+    int argcnt;
 
     /** No of arguments to find in parameter definition (Command Table).
     */
-    int     argfnd;
+    int argfnd;
 
     /** strtoXX() Error detection.
     */
-    int     error;
+    int error;
 };
 
 extern "C" void mbed_reset();
