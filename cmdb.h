@@ -1,5 +1,5 @@
 /* mbed Command Interpreter Library
- * Copyright (c) 2016 wvd_vegt, 2019 sweaver
+ * Copyright (c) 2016 wvd_vegt
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -373,10 +373,10 @@ enum
 /** The Escape Codes Table.
  */
 static const struct esc esc_tbl[ESC_TBL_LEN] = {
-    {"\033[A", EID_CURSOR_UP},
-    {"\033[B", EID_CURSOR_DOWN},
-    {"\033[C", EID_CURSOR_RIGHT},
-    {"\033[D", EID_CURSOR_LEFT},
+    {(char *)"\033[A", EID_CURSOR_UP},
+    {(char *)"\033[B", EID_CURSOR_DOWN},
+    {(char *)"\033[C", EID_CURSOR_RIGHT},
+    {(char *)"\033[D", EID_CURSOR_LEFT},
 };
 
 //------------------------------------------------------------------------------
